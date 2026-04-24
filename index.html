@@ -31,21 +31,30 @@
       padding: 10px;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      max-width: 250px;
+      max-width: 280px;
+      max-height: 90vh;
+      overflow-y: auto;
       display: none;
       z-index: 1000;
     }
 
-    .form-popup input,
-    .form-popup select {
+    input, select, button {
       width: 100%;
       margin-bottom: 6px;
-      padding: 4px;
+      padding: 6px;
+      font-size: 14px;
     }
 
-    .form-popup button {
-      width: 100%;
-      padding: 6px;
+    .username-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      z-index: 2000;
     }
   </style>
 </head>
@@ -54,18 +63,32 @@
 
 <div id="map"></div>
 
+<!-- Username Setup -->
+<div id="usernamePopup" class="username-popup" style="display:none;">
+  <h4>Enter Username</h4>
+  <input type="text" id="usernameInput" placeholder="Username" />
+  <button onclick="saveUsername()">Save</button>
+</div>
+
+<!-- Catch Form -->
 <div id="catchForm" class="form-popup">
   <h4>Log Catch</h4>
 
-  <select id="lake">
-    <option value="">Select Lake</option>
-    <option value="Lake1">Lake1</option>
-    <option value="Lake2">Lake2</option>
-  </select>
+  <!-- Water Body Search -->
+  <input type="text" id="waterBody" placeholder="Search Body of Water" />
 
-  <input type="text" id="species" placeholder="Species" />
-  <input type="number" id="size" placeholder="Size (in)" />
-  <input type="number" id="weight" placeholder="Weight (lb)" />
+  <!-- Species Selector -->
+  <select id="species"></select>
+  <button onclick="addSpecies()">+ Add New Species</button>
+
+  <!-- Optional Fields -->
+  <input type="number" id="size" placeholder="Size (inches)" />
+  <input type="number" id="weight" placeholder="Weight (lbs)" />
+  <input type="text" id="bait" placeholder="Bait / Lure" />
+  <input type="text" id="rig" placeholder="Rig Type" />
+  <input type="text" id="retrieve" placeholder="Retrieve Style" />
+  <input type="number" id="depth" placeholder="Depth (ft)" />
+  <input type="number" id="waterTemp" placeholder="Water Temp (°F)" />
 
   <button onclick="saveCatch()">Save Catch</button>
   <button onclick="closeForm()">Cancel</button>
@@ -75,10 +98,69 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+  // Default Species List
+  const defaultSpecies = [
+    "Largemouth Bass",
+    "Smallmouth Bass",
+    "Rainbow Trout",
+    "Crappie"
+  ];
+
+  function loadSpecies() {
+    let speciesList = JSON.parse(localStorage.getItem("speciesList"));
+
+    if (!speciesList) {
+      speciesList = defaultSpecies;
+      localStorage.setItem("speciesList", JSON.stringify(speciesList));
+    }
+
+    const speciesSelect = document.getElementById("species");
+    speciesSelect.innerHTML = "";
+
+    speciesList.forEach(species => {
+      const option = document.createElement("option");
+      option.value = species;
+      option.textContent = species;
+      speciesSelect.appendChild(option);
+    });
+  }
+
+  function addSpecies() {
+    const newSpecies = prompt("Enter new species name:");
+
+    if (!newSpecies) return;
+
+    let speciesList = JSON.parse(localStorage.getItem("speciesList"));
+
+    speciesList.push(newSpecies);
+
+    localStorage.setItem("speciesList", JSON.stringify(speciesList));
+
+    loadSpecies();
+  }
+
+  // Username System
+  function checkUsername() {
+    const username = localStorage.getItem("username");
+
+    if (!username) {
+      document.getElementById("usernamePopup").style.display = "block";
+    }
+  }
+
+  function saveUsername() {
+    const username = document.getElementById("usernameInput").value;
+
+    if (!username) return;
+
+    localStorage.setItem("username", username);
+
+    document.getElementById("usernamePopup").style.display = "none";
+  }
+
   // Initialize map
   const map = L.map('map').setView([46.731, -117.179], 13);
 
-  // Tile layer
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(map);
@@ -86,7 +168,6 @@
   let tempMarker = null;
   let clickedLatLng = null;
 
-  // Click map to add pin
   map.on('click', function(e) {
     if (tempMarker) {
       map.removeLayer(tempMarker);
@@ -109,28 +190,25 @@
   }
 
   function saveCatch() {
-    const lake = document.getElementById('lake').value;
     const species = document.getElementById('species').value;
-    const size = document.getElementById('size').value;
-    const weight = document.getElementById('weight').value;
+    const waterBody = document.getElementById('waterBody').value;
 
-    if (!lake || !species) {
-      alert('Please fill required fields');
-      return;
-    }
+    const username = localStorage.getItem("username");
 
-    // Permanent marker
     L.marker(clickedLatLng)
       .addTo(map)
       .bindPopup(`
         <b>${species}</b><br>
-        Lake: ${lake}<br>
-        Size: ${size} in<br>
-        Weight: ${weight} lb
+        Water: ${waterBody}<br>
+        User: ${username}
       `);
 
     closeForm();
   }
+
+  // Startup
+  loadSpecies();
+  checkUsername();
 </script>
 
 </body>
