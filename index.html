@@ -184,14 +184,9 @@
 
   function toggleMoreInfo(btn, id) {
     const el = document.getElementById(id);
-
     el.classList.toggle("open");
 
-    if (el.classList.contains("open")) {
-      btn.textContent = "Less Information";
-    } else {
-      btn.textContent = "More Information";
-    }
+    btn.textContent = el.classList.contains("open") ? "Less Information" : "More Information";
   }
 
   function saveCatch() {
@@ -203,35 +198,49 @@
       return;
     }
 
-    const size = document.getElementById('size').value || "-";
-    const weight = document.getElementById('weight').value || "-";
-    const bait = document.getElementById('bait').value || "-";
-    const rig = document.getElementById('rig').value || "-";
-    const retrieve = document.getElementById('retrieve').value || "-";
-    const depth = document.getElementById('depth').value || "-";
-    const waterTemp = document.getElementById('waterTemp').value || "-";
+    const catchObj = {
+      id: Date.now(),
+      lat: clickedLatLng.lat,
+      lng: clickedLatLng.lng,
+      species: species,
+      waterBody: waterBody,
+      username: localStorage.getItem("username"),
+      size: document.getElementById('size').value || "",
+      weight: document.getElementById('weight').value || "",
+      bait: document.getElementById('bait').value || "",
+      rig: document.getElementById('rig').value || "",
+      retrieve: document.getElementById('retrieve').value || "",
+      depth: document.getElementById('depth').value || "",
+      waterTemp: document.getElementById('waterTemp').value || "",
+      createdAt: new Date().toISOString()
+    };
 
-    const username = localStorage.getItem("username");
+    console.log("Catch saved:", catchObj);
 
-    const id = "info-" + Date.now();
+    let catches = JSON.parse(localStorage.getItem("catches")) || [];
+    catches.push(catchObj);
+    localStorage.setItem("catches", JSON.stringify(catches));
+
+    const infoId = "info-" + catchObj.id;
 
     const popup = `
-      <b>${species}</b><br>
-      Water: ${waterBody}<br>
-      User: ${username}<br>
-      <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Information</button>
-      <div id="${id}" class="more-info">
-        Size: ${size} in<br>
-        Weight: ${weight} lb<br>
-        Bait: ${bait}<br>
-        Rig: ${rig}<br>
-        Retrieve: ${retrieve}<br>
-        Depth: ${depth} ft<br>
-        Water Temp: ${waterTemp} °F
+      <b>${catchObj.species}</b><br>
+      Water: ${catchObj.waterBody}<br>
+      User: ${catchObj.username}<br>
+      <button class="popup-button" onclick="toggleMoreInfo(this,'${infoId}')">More Information</button>
+      <div id="${infoId}" class="more-info">
+        Size: ${catchObj.size || "-"} in<br>
+        Weight: ${catchObj.weight || "-"} lb<br>
+        Bait: ${catchObj.bait || "-"}<br>
+        Rig: ${catchObj.rig || "-"}<br>
+        Retrieve: ${catchObj.retrieve || "-"}<br>
+        Depth: ${catchObj.depth || "-"} ft<br>
+        Water Temp: ${catchObj.waterTemp || "-"} °F<br>
+        Time: ${catchObj.createdAt}
       </div>
     `;
 
-    L.marker(clickedLatLng)
+    L.marker([catchObj.lat, catchObj.lng])
       .addTo(map)
       .bindPopup(popup);
 
