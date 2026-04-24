@@ -59,6 +59,10 @@
       font-size: 13px;
     }
 
+    .more-info.open {
+      display: block;
+    }
+
     .popup-button {
       margin-top: 6px;
       padding: 4px;
@@ -181,13 +185,11 @@
   function toggleMoreInfo(btn, id) {
     const el = document.getElementById(id);
 
-    const isHidden = (el.style.display === "none" || el.style.display === "");
+    el.classList.toggle("open");
 
-    if (isHidden) {
-      el.style.display = "block";
+    if (el.classList.contains("open")) {
       btn.textContent = "Less Information";
     } else {
-      el.style.display = "none";
       btn.textContent = "More Information";
     }
   }
