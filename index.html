@@ -56,6 +56,18 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
       z-index: 2000;
     }
+
+    .more-info {
+      display: none;
+      margin-top: 5px;
+      font-size: 13px;
+    }
+
+    .popup-button {
+      margin-top: 5px;
+      padding: 4px;
+      font-size: 13px;
+    }
   </style>
 </head>
 
@@ -74,14 +86,11 @@
 <div id="catchForm" class="form-popup">
   <h4>Log Catch</h4>
 
-  <!-- Water Body Search -->
-  <input type="text" id="waterBody" placeholder="Search Body of Water" />
+  <input type="text" id="waterBody" placeholder="Search Body of Water (Required)" />
 
-  <!-- Species Selector -->
   <select id="species"></select>
   <button onclick="addSpecies()">+ Add New Species</button>
 
-  <!-- Optional Fields -->
   <input type="number" id="size" placeholder="Size (inches)" />
   <input type="number" id="weight" placeholder="Weight (lbs)" />
   <input type="text" id="bait" placeholder="Bait / Lure" />
@@ -94,11 +103,9 @@
   <button onclick="closeForm()">Cancel</button>
 </div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-  // Default Species List
   const defaultSpecies = [
     "Largemouth Bass",
     "Smallmouth Bass",
@@ -139,7 +146,6 @@
     loadSpecies();
   }
 
-  // Username System
   function checkUsername() {
     const username = localStorage.getItem("username");
 
@@ -158,7 +164,6 @@
     document.getElementById("usernamePopup").style.display = "none";
   }
 
-  // Initialize map
   const map = L.map('map').setView([46.731, -117.179], 13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -189,24 +194,60 @@
     }
   }
 
+  function toggleMoreInfo(id) {
+    const element = document.getElementById(id);
+
+    if (element.style.display === "none") {
+      element.style.display = "block";
+    } else {
+      element.style.display = "none";
+    }
+  }
+
   function saveCatch() {
     const species = document.getElementById('species').value;
     const waterBody = document.getElementById('waterBody').value;
 
+    if (!species || !waterBody) {
+      alert("Species and Body of Water are required.");
+      return;
+    }
+
+    const size = document.getElementById('size').value || "-";
+    const weight = document.getElementById('weight').value || "-";
+    const bait = document.getElementById('bait').value || "-";
+    const rig = document.getElementById('rig').value || "-";
+    const retrieve = document.getElementById('retrieve').value || "-";
+    const depth = document.getElementById('depth').value || "-";
+    const waterTemp = document.getElementById('waterTemp').value || "-";
+
     const username = localStorage.getItem("username");
+
+    const uniqueId = "info-" + Date.now();
+
+    const popupContent = `
+      <b>${species}</b><br>
+      Water: ${waterBody}<br>
+      User: ${username}<br>
+      <button class="popup-button" onclick="toggleMoreInfo('${uniqueId}')">More Information</button>
+      <div id="${uniqueId}" class="more-info">
+        Size: ${size} in<br>
+        Weight: ${weight} lb<br>
+        Bait: ${bait}<br>
+        Rig: ${rig}<br>
+        Retrieve: ${retrieve}<br>
+        Depth: ${depth} ft<br>
+        Water Temp: ${waterTemp} °F
+      </div>
+    `;
 
     L.marker(clickedLatLng)
       .addTo(map)
-      .bindPopup(`
-        <b>${species}</b><br>
-        Water: ${waterBody}<br>
-        User: ${username}
-      `);
+      .bindPopup(popupContent);
 
     closeForm();
   }
 
-  // Startup
   loadSpecies();
   checkUsername();
 </script>
