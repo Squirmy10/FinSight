@@ -5,11 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fishing Map</title>
 
-  <!-- Leaflet CSS -->
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     html, body {
@@ -59,12 +55,12 @@
 
     .more-info {
       display: none;
-      margin-top: 5px;
+      margin-top: 6px;
       font-size: 13px;
     }
 
     .popup-button {
-      margin-top: 5px;
+      margin-top: 6px;
       padding: 4px;
       font-size: 13px;
     }
@@ -75,14 +71,12 @@
 
 <div id="map"></div>
 
-<!-- Username Setup -->
 <div id="usernamePopup" class="username-popup" style="display:none;">
   <h4>Enter Username</h4>
   <input type="text" id="usernameInput" placeholder="Username" />
   <button onclick="saveUsername()">Save</button>
 </div>
 
-<!-- Catch Form -->
 <div id="catchForm" class="form-popup">
   <h4>Log Catch</h4>
 
@@ -134,13 +128,10 @@
 
   function addSpecies() {
     const newSpecies = prompt("Enter new species name:");
-
     if (!newSpecies) return;
 
     let speciesList = JSON.parse(localStorage.getItem("speciesList"));
-
     speciesList.push(newSpecies);
-
     localStorage.setItem("speciesList", JSON.stringify(speciesList));
 
     loadSpecies();
@@ -148,7 +139,6 @@
 
   function checkUsername() {
     const username = localStorage.getItem("username");
-
     if (!username) {
       document.getElementById("usernamePopup").style.display = "block";
     }
@@ -156,11 +146,9 @@
 
   function saveUsername() {
     const username = document.getElementById("usernameInput").value;
-
     if (!username) return;
 
     localStorage.setItem("username", username);
-
     document.getElementById("usernamePopup").style.display = "none";
   }
 
@@ -174,12 +162,9 @@
   let clickedLatLng = null;
 
   map.on('click', function(e) {
-    if (tempMarker) {
-      map.removeLayer(tempMarker);
-    }
+    if (tempMarker) map.removeLayer(tempMarker);
 
     clickedLatLng = e.latlng;
-
     tempMarker = L.marker(e.latlng).addTo(map);
 
     document.getElementById('catchForm').style.display = 'block';
@@ -187,20 +172,23 @@
 
   function closeForm() {
     document.getElementById('catchForm').style.display = 'none';
-
     if (tempMarker) {
       map.removeLayer(tempMarker);
       tempMarker = null;
     }
   }
 
-  function toggleMoreInfo(id) {
-    const element = document.getElementById(id);
+  function toggleMoreInfo(btn, id) {
+    const el = document.getElementById(id);
 
-    if (element.style.display === "none") {
-      element.style.display = "block";
+    const isHidden = (el.style.display === "none" || el.style.display === "");
+
+    if (isHidden) {
+      el.style.display = "block";
+      btn.textContent = "Less Information";
     } else {
-      element.style.display = "none";
+      el.style.display = "none";
+      btn.textContent = "More Information";
     }
   }
 
@@ -223,14 +211,14 @@
 
     const username = localStorage.getItem("username");
 
-    const uniqueId = "info-" + Date.now();
+    const id = "info-" + Date.now();
 
-    const popupContent = `
+    const popup = `
       <b>${species}</b><br>
       Water: ${waterBody}<br>
       User: ${username}<br>
-      <button class="popup-button" onclick="toggleMoreInfo('${uniqueId}')">More Information</button>
-      <div id="${uniqueId}" class="more-info">
+      <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Information</button>
+      <div id="${id}" class="more-info">
         Size: ${size} in<br>
         Weight: ${weight} lb<br>
         Bait: ${bait}<br>
@@ -243,7 +231,7 @@
 
     L.marker(clickedLatLng)
       .addTo(map)
-      .bindPopup(popupContent);
+      .bindPopup(popup);
 
     closeForm();
   }
