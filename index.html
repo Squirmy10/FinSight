@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fishing Map</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    .form-popup {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      max-width: 250px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .form-popup input,
+    .form-popup select {
+      width: 100%;
+      margin-bottom: 6px;
+      padding: 4px;
+    }
+
+    .form-popup button {
+      width: 100%;
+      padding: 6px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+<div id="catchForm" class="form-popup">
+  <h4>Log Catch</h4>
+
+  <select id="lake">
+    <option value="">Select Lake</option>
+    <option value="Lake1">Lake1</option>
+    <option value="Lake2">Lake2</option>
+  </select>
+
+  <input type="text" id="species" placeholder="Species" />
+  <input type="number" id="size" placeholder="Size (in)" />
+  <input type="number" id="weight" placeholder="Weight (lb)" />
+
+  <button onclick="saveCatch()">Save Catch</button>
+  <button onclick="closeForm()">Cancel</button>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // Initialize map
+  const map = L.map('map').setView([46.731, -117.179], 13);
+
+  // Tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let tempMarker = null;
+  let clickedLatLng = null;
+
+  // Click map to add pin
+  map.on('click', function(e) {
+    if (tempMarker) {
+      map.removeLayer(tempMarker);
+    }
+
+    clickedLatLng = e.latlng;
+
+    tempMarker = L.marker(e.latlng).addTo(map);
+
+    document.getElementById('catchForm').style.display = 'block';
+  });
+
+  function closeForm() {
+    document.getElementById('catchForm').style.display = 'none';
+
+    if (tempMarker) {
+      map.removeLayer(tempMarker);
+      tempMarker = null;
+    }
+  }
+
+  function saveCatch() {
+    const lake = document.getElementById('lake').value;
+    const species = document.getElementById('species').value;
+    const size = document.getElementById('size').value;
+    const weight = document.getElementById('weight').value;
+
+    if (!lake || !species) {
+      alert('Please fill required fields');
+      return;
+    }
+
+    // Permanent marker
+    L.marker(clickedLatLng)
+      .addTo(map)
+      .bindPopup(`
+        <b>${species}</b><br>
+        Lake: ${lake}<br>
+        Size: ${size} in<br>
+        Weight: ${weight} lb
+      `);
+
+    closeForm();
+  }
+</script>
+
+</body>
+</html>
