@@ -449,6 +449,122 @@ async function dbFetch(path, method = "GET", body = null) {
   return res.json().catch(() => null);
 }
 
+// ── API Keys ──────────────────────────────────────────────────────────────────
+const OWM_KEY = "08142f584689b2ecad8e889c9583962d";
+
+// ── Weather auto-fill (OpenWeatherMap) ────────────────────────────────────────
+async function fetchWeather(lat, lng) {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lng}&appid=${OWM_KEY}&units=imperial`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("OWM request failed: " + res.status);
+  const d = await res.json();
+
+  // Air temp
+  if (d.main?.temp != null)
+    document.getElementById("airTemp").value = Math.round(d.main.temp);
+
+  // Barometric pressure — OWM gives hPa, convert to inHg
+  if (d.main?.pressure != null)
+    document.getElementById("pressure").value = (d.main.pressure * 0.02953).toFixed(2);
+
+  // Wind speed (already in mph with imperial units)
+  if (d.wind?.speed != null)
+    document.getElementById("windSpeed").value = Math.round(d.wind.speed);
+
+  // Wind direction — convert degrees to compass
+  if (d.wind?.deg != null) {
+    const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
+    const idx = Math.round(d.wind.deg / 45) % 8;
+    document.getElementById("windDirection").value = dirs[idx];
+  }
+
+  // Weather condition — map OWM codes to our dropdown options
+  const id = d.weather?.[0]?.id;
+  let condition = "";
+  if (id != null) {
+    if (id === 800) condition = "Clear";
+    else if (id === 801 || id === 802) condition = "Partly Cloudy";
+    else if (id === 803 || id === 804) condition = "Overcast";
+    else if (id >= 300 && id < 400) condition = "Light Rain";
+    else if (id >= 500 && id < 502) condition = "Light Rain";
+    else if (id >= 502 && id < 600) condition = "Heavy Rain";
+    else if (id >= 600 && id < 700) condition = "Snow";
+    else if (id >= 700 && id < 800) condition = "Fog";
+    else if (id >= 200 && id < 300) condition = "Thunderstorm";
+  }
+  if (condition) document.getElementById("weatherCondition").value = condition;
+}
+
+// ── Water temp auto-fill (USGS) ───────────────────────────────────────────────
+async function fetchUSGSWaterTemp(lat, lng) {
+  // Find nearby USGS sites with water temp data within ~0.5 degree radius
+  const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&parameterCd=00010&lat=${lat}&lng=${lng}&period=PT2H&siteStatus=active`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  const data = await res.json();
+
+  const series = data?.value?.timeSeries;
+  if (!series || series.length === 0) return null;
+
+  // Find the closest site that has a recent reading
+  for (const ts of series) {
+    const values = ts.values?.[0]?.value;
+    if (!values || values.length === 0) continue;
+    const latest = values[values.length - 1];
+    const tempC = parseFloat(latest.value);
+    if (isNaN(tempC)) continue;
+    // Convert °C to °F
+    const tempF = Math.round(tempC * 9/5 + 32);
+    const siteName = ts.sourceInfo?.siteName || "nearby USGS station";
+    return { tempF, siteName };
+  }
+  return null;
+}
+
+// ── Combined auto-fill on pin drop ────────────────────────────────────────────
+async function autoFillConditions(lat, lng) {
+  const statusMsg = document.getElementById("statusMsg");
+  statusMsg.textContent = "⏳ Fetching weather & water data…";
+  statusMsg.style.color = "var(--text-muted)";
+
+  let owmOk = false, usgsOk = false;
+
+  // Run both fetches in parallel
+  const [owmResult, usgsResult] = await Promise.allSettled([
+    fetchWeather(lat, lng),
+    fetchUSGSWaterTemp(lat, lng)
+  ]);
+
+  if (owmResult.status === "fulfilled") {
+    owmOk = true;
+  } else {
+    console.warn("OWM fetch failed:", owmResult.reason);
+  }
+
+  if (usgsResult.status === "fulfilled" && usgsResult.value) {
+    const { tempF, siteName } = usgsResult.value;
+    const wtField = document.getElementById("waterTemp");
+    wtField.value = tempF;
+    wtField.placeholder = `Water Temp (°F) — USGS: ${siteName}`;
+    usgsOk = true;
+  } else {
+    document.getElementById("waterTemp").placeholder = "Water Temp (°F) — no USGS station nearby, enter manually";
+    console.warn("USGS fetch failed or no data:", usgsResult.reason || "no nearby station");
+  }
+
+  // Status summary
+  if (owmOk && usgsOk) {
+    statusMsg.textContent = "✅ Weather & water temp auto-filled — edit any field as needed";
+  } else if (owmOk) {
+    statusMsg.textContent = "✅ Weather auto-filled — no USGS water temp nearby, enter manually";
+  } else if (usgsOk) {
+    statusMsg.textContent = "✅ USGS water temp filled — weather fetch failed, enter manually";
+  } else {
+    statusMsg.textContent = "⚠️ Auto-fill unavailable — enter conditions manually";
+    statusMsg.style.color = "#c0392b";
+  }
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let allCatches = [];
 let filteredCatches = [];
@@ -557,6 +673,8 @@ map.on("click", function(e) {
   document.getElementById("form-title").textContent = "🎣 Log Catch";
   document.getElementById("catchForm").style.display = "block";
   document.getElementById("statusMsg").textContent = "";
+  // Auto-fill weather (OWM) and water temp (USGS) for the dropped pin location
+  autoFillConditions(e.latlng.lat, e.latlng.lng);
 });
 
 // ── Form helpers ──────────────────────────────────────────────────────────────
@@ -575,6 +693,8 @@ function clearFormFields() {
   document.getElementById("windDirection").value = "";
   document.getElementById("moonPhase").value = "";
   document.getElementById("season").value = "";
+  // Reset water temp placeholder to default
+  document.getElementById("waterTemp").placeholder = "Water Temp (°F)";
 }
 
 function populateForm(c) {
