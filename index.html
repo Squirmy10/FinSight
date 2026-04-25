@@ -4,42 +4,71 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fishing Map</title>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <style>
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: Arial, sans-serif;
-    }
-
-    #map {
-      height: 100%;
-      width: 100%;
-    }
+    html, body { height: 100%; margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100%; width: 100%; }
 
     .form-popup {
       position: absolute;
       top: 10px;
       left: 10px;
       background: white;
-      padding: 10px;
+      padding: 12px;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      max-width: 280px;
-      max-height: 90vh;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      width: 272px;
+      max-height: 92vh;
       overflow-y: auto;
       display: none;
       z-index: 1000;
+      box-sizing: border-box;
     }
 
-    input, select, button {
-      width: 100%;
-      margin-bottom: 6px;
-      padding: 6px;
-      font-size: 14px;
+    .form-popup h4 { margin: 0 0 8px 0; font-size: 15px; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: bold;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 10px 0 4px 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 2px;
     }
+
+    input, select {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 7px 6px;
+      font-size: 13px;
+      box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    input[readonly] { background: #f5f5f5; color: #555; }
+
+    .species-row { display: flex; gap: 4px; margin-bottom: 5px; }
+    .species-row select { flex: 1; margin-bottom: 0; }
+    .species-row button {
+      padding: 6px 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-row { display: flex; gap: 6px; margin-top: 10px; }
+    .btn-row button { flex: 1; padding: 8px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-save { background: #2a7a2a; color: white; }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-cancel { background: #ddd; color: #333; }
+
+    .status-msg { font-size: 12px; color: #666; text-align: center; min-height: 16px; margin-top: 4px; }
 
     .username-popup {
       position: absolute;
@@ -47,209 +76,362 @@
       left: 50%;
       transform: translate(-50%, -50%);
       background: white;
-      padding: 15px;
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       z-index: 2000;
+      width: 260px;
+      box-sizing: border-box;
     }
-
-    .more-info {
-      display: none;
-      margin-top: 6px;
-      font-size: 13px;
-    }
-
-    .more-info.open {
-      display: block;
-    }
+    .username-popup h4 { margin: 0 0 10px 0; }
+    .username-popup input { width: 100%; margin-bottom: 8px; padding: 8px; font-size: 14px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    .username-popup button { width: 100%; padding: 8px; background: #2a7a2a; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
 
     .popup-button {
-      margin-top: 6px;
-      padding: 4px;
-      font-size: 13px;
+      margin-top: 5px;
+      padding: 3px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 3px;
     }
+
+    .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.8; }
+    .more-info.open { display: block; }
   </style>
 </head>
-
 <body>
 
 <div id="map"></div>
 
 <div id="usernamePopup" class="username-popup" style="display:none;">
-  <h4>Enter Username</h4>
-  <input type="text" id="usernameInput" placeholder="Username" />
-  <button onclick="saveUsername()">Save</button>
+  <h4>Welcome! Choose a username</h4>
+  <input type="text" id="usernameInput" placeholder="Enter username" />
+  <button onclick="saveUsername()">Start Fishing</button>
 </div>
 
 <div id="catchForm" class="form-popup">
-  <h4>Log Catch</h4>
+  <h4>🎣 Log Catch</h4>
 
-  <input type="text" id="waterBody" placeholder="Search Body of Water (Required)" />
+  <!-- REQUIRED -->
+  <div class="section-label">Required</div>
+  <input type="text" id="waterBody" placeholder="Body of Water" />
+  <div class="species-row">
+    <select id="species"></select>
+    <button onclick="addSpecies()">+ New</button>
+  </div>
 
-  <select id="species"></select>
-  <button onclick="addSpecies()">+ Add New Species</button>
+  <!-- DATE & TIME -->
+  <div class="section-label">Date & Time</div>
+  <input type="date" id="catchDate" />
+  <input type="time" id="catchTime" />
 
+  <!-- CATCH DETAILS -->
+  <div class="section-label">Catch Details</div>
   <input type="number" id="size" placeholder="Size (inches)" />
-  <input type="number" id="weight" placeholder="Weight (lbs)" />
+  <input type="number" id="weight" placeholder="Weight (lbs)" step="0.1" />
   <input type="text" id="bait" placeholder="Bait / Lure" />
   <input type="text" id="rig" placeholder="Rig Type" />
   <input type="text" id="retrieve" placeholder="Retrieve Style" />
-  <input type="number" id="depth" placeholder="Depth (ft)" />
+  <input type="number" id="depth" placeholder="Depth Fished (ft)" />
   <input type="number" id="waterTemp" placeholder="Water Temp (°F)" />
 
-  <button onclick="saveCatch()">Save Catch</button>
-  <button onclick="closeForm()">Cancel</button>
+  <!-- CONDITIONS -->
+  <div class="section-label">Conditions</div>
+  <input type="number" id="airTemp" placeholder="Air Temp (°F)" />
+  <select id="weatherCondition">
+    <option value="">-- Weather --</option>
+    <option>Clear</option>
+    <option>Partly Cloudy</option>
+    <option>Overcast</option>
+    <option>Light Rain</option>
+    <option>Heavy Rain</option>
+    <option>Fog</option>
+    <option>Snow</option>
+    <option>Thunderstorm</option>
+  </select>
+  <input type="number" id="windSpeed" placeholder="Wind Speed (mph)" />
+  <select id="windDirection">
+    <option value="">-- Wind Direction --</option>
+    <option>N</option><option>NE</option><option>E</option><option>SE</option>
+    <option>S</option><option>SW</option><option>W</option><option>NW</option>
+    <option>Calm</option>
+  </select>
+  <input type="number" id="pressure" placeholder="Barometric Pressure (inHg)" step="0.01" />
+
+  <!-- AUTO-CALCULATED -->
+  <div class="section-label">Auto-Calculated</div>
+  <input type="text" id="moonPhase" placeholder="Moon Phase" readonly />
+  <select id="season">
+    <option value="">-- Season --</option>
+    <option>Spring</option>
+    <option>Summer</option>
+    <option>Fall</option>
+    <option>Winter</option>
+  </select>
+
+  <div class="status-msg" id="statusMsg"></div>
+  <div class="btn-row">
+    <button class="btn-save" id="saveBtn" onclick="saveCatch()">Save Catch</button>
+    <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-  const defaultSpecies = [
-    "Largemouth Bass",
-    "Smallmouth Bass",
-    "Rainbow Trout",
-    "Crappie"
-  ];
 
-  function loadSpecies() {
-    let speciesList = JSON.parse(localStorage.getItem("speciesList"));
+// ── Supabase ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = "https://jtyporonxtgclzvkuttt.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0eXBvcm9ueHRnY2x6dmt1dHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzgwNTIsImV4cCI6MjA5MjU1NDA1Mn0._n-95mvIjBvg-qqBB6VVp-DXmg3WsQTF1oiploM_P9I";
 
-    if (!speciesList) {
-      speciesList = defaultSpecies;
-      localStorage.setItem("speciesList", JSON.stringify(speciesList));
+async function dbFetch(path, method = "GET", body = null) {
+  const opts = {
+    method,
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": "application/json",
+      "Prefer": method === "POST" ? "return=representation" : ""
     }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json().catch(() => null);
+}
 
-    const speciesSelect = document.getElementById("species");
-    speciesSelect.innerHTML = "";
+// ── Species ─────────────────────────────────────────────────────────────────
+const DEFAULT_SPECIES = ["Largemouth Bass","Smallmouth Bass","Rainbow Trout","Brown Trout","Crappie","Bluegill","Walleye","Northern Pike","Catfish"];
 
-    speciesList.forEach(species => {
-      const option = document.createElement("option");
-      option.value = species;
-      option.textContent = species;
-      speciesSelect.appendChild(option);
-    });
+function loadSpecies(selectVal) {
+  let list = JSON.parse(localStorage.getItem("speciesList"));
+  if (!list) {
+    list = DEFAULT_SPECIES;
+    localStorage.setItem("speciesList", JSON.stringify(list));
   }
-
-  function addSpecies() {
-    const newSpecies = prompt("Enter new species name:");
-    if (!newSpecies) return;
-
-    let speciesList = JSON.parse(localStorage.getItem("speciesList"));
-    speciesList.push(newSpecies);
-    localStorage.setItem("speciesList", JSON.stringify(speciesList));
-
-    loadSpecies();
-  }
-
-  function checkUsername() {
-    const username = localStorage.getItem("username");
-    if (!username) {
-      document.getElementById("usernamePopup").style.display = "block";
-    }
-  }
-
-  function saveUsername() {
-    const username = document.getElementById("usernameInput").value;
-    if (!username) return;
-
-    localStorage.setItem("username", username);
-    document.getElementById("usernamePopup").style.display = "none";
-  }
-
-  const map = L.map('map').setView([46.731, -117.179], 13);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(map);
-
-  let tempMarker = null;
-  let clickedLatLng = null;
-
-  map.on('click', function(e) {
-    if (tempMarker) map.removeLayer(tempMarker);
-
-    clickedLatLng = e.latlng;
-    tempMarker = L.marker(e.latlng).addTo(map);
-
-    document.getElementById('catchForm').style.display = 'block';
+  const sel = document.getElementById("species");
+  sel.innerHTML = "";
+  list.forEach(s => {
+    const o = document.createElement("option");
+    o.value = o.textContent = s;
+    sel.appendChild(o);
   });
+  if (selectVal) sel.value = selectVal;
+}
 
-  function closeForm() {
-    document.getElementById('catchForm').style.display = 'none';
-    if (tempMarker) {
-      map.removeLayer(tempMarker);
-      tempMarker = null;
-    }
+function addSpecies() {
+  const name = prompt("Enter new species name:");
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  let list = JSON.parse(localStorage.getItem("speciesList"));
+  if (!list.includes(trimmed)) {
+    list.push(trimmed);
+    localStorage.setItem("speciesList", JSON.stringify(list));
+  }
+  loadSpecies(trimmed);
+}
+
+// ── Username ─────────────────────────────────────────────────────────────────
+function checkUsername() {
+  if (!localStorage.getItem("username")) {
+    document.getElementById("usernamePopup").style.display = "block";
+  }
+}
+
+function saveUsername() {
+  const val = document.getElementById("usernameInput").value.trim();
+  if (!val) return;
+  localStorage.setItem("username", val);
+  document.getElementById("usernamePopup").style.display = "none";
+}
+
+// ── Moon Phase ───────────────────────────────────────────────────────────────
+function getMoonPhase(date) {
+  const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
+                  "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
+  let y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
+  if (m < 3) { y--; m += 12; }
+  m++;
+  let jd = 365.25 * y + 30.6 * m + d - 694039.09;
+  jd /= 29.5305882;
+  jd -= Math.floor(jd);
+  let b = Math.round(jd * 8);
+  if (b >= 8) b = 0;
+  return phases[b];
+}
+
+function getSeason(date) {
+  const m = date.getMonth() + 1;
+  if (m >= 3 && m <= 5) return "Spring";
+  if (m >= 6 && m <= 8) return "Summer";
+  if (m >= 9 && m <= 11) return "Fall";
+  return "Winter";
+}
+
+function prefillDateTime() {
+  const now = new Date();
+  document.getElementById("catchDate").value = now.toISOString().split("T")[0];
+  document.getElementById("catchTime").value = now.toTimeString().slice(0, 5);
+  updateAutoFields(now);
+}
+
+function updateAutoFields(date) {
+  document.getElementById("moonPhase").value = getMoonPhase(date);
+  document.getElementById("season").value = getSeason(date);
+}
+
+document.getElementById("catchDate").addEventListener("change", function () {
+  if (this.value) updateAutoFields(new Date(this.value + "T12:00:00"));
+});
+
+// ── Map ──────────────────────────────────────────────────────────────────────
+const map = L.map("map").setView([46.731, -117.179], 13);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: "&copy; OpenStreetMap contributors"
+}).addTo(map);
+
+let tempMarker = null;
+let clickedLatLng = null;
+
+map.on("click", function (e) {
+  if (tempMarker) map.removeLayer(tempMarker);
+  clickedLatLng = e.latlng;
+  tempMarker = L.marker(e.latlng).addTo(map);
+  prefillDateTime();
+  document.getElementById("catchForm").style.display = "block";
+  document.getElementById("statusMsg").textContent = "";
+});
+
+function closeForm() {
+  document.getElementById("catchForm").style.display = "none";
+  document.getElementById("statusMsg").textContent = "";
+  if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+  clearForm();
+}
+
+function clearForm() {
+  ["waterBody","size","weight","bait","rig","retrieve","depth",
+   "waterTemp","airTemp","windSpeed","pressure"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("weatherCondition").value = "";
+  document.getElementById("windDirection").value = "";
+  document.getElementById("moonPhase").value = "";
+  document.getElementById("season").value = "";
+}
+
+// ── Popup HTML ───────────────────────────────────────────────────────────────
+function buildPopup(c) {
+  const id = "mi-" + (c.id || Date.now());
+  const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null]
+    .filter(Boolean).join(" ") || "—";
+
+  return `
+    <b>${c.species}</b><br>
+    <span style="font-size:12px;">📍 ${c.water_body} &nbsp;|&nbsp; 👤 ${c.username}</span><br>
+    <span style="font-size:12px;">📅 ${c.catch_date || "—"} &nbsp; ${c.catch_time || ""}</span><br>
+    <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Info</button>
+    <div id="${id}" class="more-info">
+      <b>Catch</b><br>
+      Size: ${c.size_in != null ? c.size_in + " in" : "—"}<br>
+      Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}<br>
+      Bait: ${c.bait || "—"}<br>
+      Rig: ${c.rig || "—"}<br>
+      Retrieve: ${c.retrieve || "—"}<br>
+      Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}<br>
+      Water Temp: ${c.water_temp_f != null ? c.water_temp_f + " °F" : "—"}<br>
+      <b>Conditions</b><br>
+      Air Temp: ${c.air_temp_f != null ? c.air_temp_f + " °F" : "—"}<br>
+      Weather: ${c.weather || "—"}<br>
+      Wind: ${wind}<br>
+      Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"}<br>
+      Moon: ${c.moon_phase || "—"}<br>
+      Season: ${c.season || "—"}<br>
+      Coords: ${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)}
+    </div>
+  `;
+}
+
+function toggleMoreInfo(btn, id) {
+  const el = document.getElementById(id);
+  el.classList.toggle("open");
+  btn.textContent = el.classList.contains("open") ? "Less Info" : "More Info";
+}
+
+// ── Load Catches ─────────────────────────────────────────────────────────────
+async function loadCatches() {
+  try {
+    const catches = await dbFetch("catches?select=*&order=created_at.desc");
+    (catches || []).forEach(c => {
+      L.marker([c.lat, c.lng]).addTo(map).bindPopup(buildPopup(c));
+    });
+  } catch (err) {
+    console.error("Failed to load catches:", err);
+  }
+}
+
+// ── Save Catch ────────────────────────────────────────────────────────────────
+async function saveCatch() {
+  const waterBody = document.getElementById("waterBody").value.trim();
+  const species = document.getElementById("species").value;
+
+  if (!waterBody || !species) {
+    alert("Body of Water and Species are required.");
+    return;
   }
 
-  function toggleMoreInfo(btn, id) {
-    const el = document.getElementById(id);
-    el.classList.toggle("open");
+  const saveBtn = document.getElementById("saveBtn");
+  const statusMsg = document.getElementById("statusMsg");
+  saveBtn.disabled = true;
+  statusMsg.textContent = "Saving...";
 
-    btn.textContent = el.classList.contains("open") ? "Less Information" : "More Information";
+  const data = {
+    username:      localStorage.getItem("username") || "anonymous",
+    lat:           clickedLatLng.lat,
+    lng:           clickedLatLng.lng,
+    water_body:    waterBody,
+    species:       species,
+    catch_date:    document.getElementById("catchDate").value || null,
+    catch_time:    document.getElementById("catchTime").value || null,
+    size_in:       parseFloat(document.getElementById("size").value) || null,
+    weight_lbs:    parseFloat(document.getElementById("weight").value) || null,
+    bait:          document.getElementById("bait").value.trim() || null,
+    rig:           document.getElementById("rig").value.trim() || null,
+    retrieve:      document.getElementById("retrieve").value.trim() || null,
+    depth_ft:      parseFloat(document.getElementById("depth").value) || null,
+    water_temp_f:  parseFloat(document.getElementById("waterTemp").value) || null,
+    air_temp_f:    parseFloat(document.getElementById("airTemp").value) || null,
+    weather:       document.getElementById("weatherCondition").value || null,
+    wind_speed:    parseFloat(document.getElementById("windSpeed").value) || null,
+    wind_direction:document.getElementById("windDirection").value || null,
+    pressure_inhg: parseFloat(document.getElementById("pressure").value) || null,
+    moon_phase:    document.getElementById("moonPhase").value || null,
+    season:        document.getElementById("season").value || null
+  };
+
+  try {
+    const result = await dbFetch("catches", "POST", data);
+    const saved = Array.isArray(result) ? result[0] : data;
+
+    if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+    L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
+
+    statusMsg.textContent = "Saved!";
+    setTimeout(closeForm, 600);
+  } catch (err) {
+    console.error("Save failed:", err);
+    statusMsg.textContent = "Save failed — check console.";
+  } finally {
+    saveBtn.disabled = false;
   }
+}
 
-  function saveCatch() {
-    const species = document.getElementById('species').value;
-    const waterBody = document.getElementById('waterBody').value;
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadSpecies();
+checkUsername();
+loadCatches();
 
-    if (!species || !waterBody) {
-      alert("Species and Body of Water are required.");
-      return;
-    }
-
-    const catchObj = {
-      id: Date.now(),
-      lat: clickedLatLng.lat,
-      lng: clickedLatLng.lng,
-      species: species,
-      waterBody: waterBody,
-      username: localStorage.getItem("username"),
-      size: document.getElementById('size').value || "",
-      weight: document.getElementById('weight').value || "",
-      bait: document.getElementById('bait').value || "",
-      rig: document.getElementById('rig').value || "",
-      retrieve: document.getElementById('retrieve').value || "",
-      depth: document.getElementById('depth').value || "",
-      waterTemp: document.getElementById('waterTemp').value || "",
-      createdAt: new Date().toISOString()
-    };
-
-    console.log("Catch saved:", catchObj);
-
-    let catches = JSON.parse(localStorage.getItem("catches")) || [];
-    catches.push(catchObj);
-    localStorage.setItem("catches", JSON.stringify(catches));
-
-    const infoId = "info-" + catchObj.id;
-
-    const popup = `
-      <b>${catchObj.species}</b><br>
-      Water: ${catchObj.waterBody}<br>
-      User: ${catchObj.username}<br>
-      <button class="popup-button" onclick="toggleMoreInfo(this,'${infoId}')">More Information</button>
-      <div id="${infoId}" class="more-info">
-        Size: ${catchObj.size || "-"} in<br>
-        Weight: ${catchObj.weight || "-"} lb<br>
-        Bait: ${catchObj.bait || "-"}<br>
-        Rig: ${catchObj.rig || "-"}<br>
-        Retrieve: ${catchObj.retrieve || "-"}<br>
-        Depth: ${catchObj.depth || "-"} ft<br>
-        Water Temp: ${catchObj.waterTemp || "-"} °F<br>
-        Time: ${catchObj.createdAt}
-      </div>
-    `;
-
-    L.marker([catchObj.lat, catchObj.lng])
-      .addTo(map)
-      .bindPopup(popup);
-
-    closeForm();
-  }
-
-  loadSpecies();
-  checkUsername();
 </script>
-
 </body>
 </html>
