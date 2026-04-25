@@ -5,183 +5,428 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fishing Map</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600&family=Cabin+Condensed:wght@600&display=swap" rel="stylesheet" />
   <style>
-    html, body { height: 100%; margin: 0; font-family: Arial, sans-serif; }
-    #map { height: 100%; width: 100%; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    .form-popup {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: white;
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      width: 272px;
-      max-height: 92vh;
-      overflow-y: auto;
-      display: none;
-      z-index: 1000;
-      box-sizing: border-box;
+    :root {
+      --green-dark: #1a3a1f;
+      --green-mid: #2d6a35;
+      --green-light: #4a9455;
+      --green-pale: #d4ead7;
+      --water: #2a5f8f;
+      --water-light: #d0e8f5;
+      --tan: #f2ead8;
+      --tan-dark: #e0d4b8;
+      --text: #1c2b1e;
+      --text-muted: #5a6b5c;
+      --white: #ffffff;
+      --shadow: 0 2px 12px rgba(0,0,0,0.18);
+      --radius: 8px;
+      --header-h: 48px;
     }
 
-    .form-popup h4 { margin: 0 0 8px 0; font-size: 15px; }
+    html, body { height: 100%; font-family: 'Cabin', sans-serif; background: var(--tan); color: var(--text); overflow: hidden; }
+
+    /* ── Header ── */
+    #header {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: var(--green-dark); color: var(--white);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; z-index: 3000; gap: 10px;
+    }
+    #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
+    #header-right { display: flex; align-items: center; gap: 8px; }
+    #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; }
+
+    .hdr-btn {
+      background: var(--green-mid); color: var(--white); border: none;
+      padding: 6px 12px; border-radius: var(--radius); font-family: 'Cabin', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .hdr-btn:hover { background: var(--green-light); }
+    .hdr-btn.active { background: var(--water); }
+
+    /* ── Layout ── */
+    #app {
+      position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0;
+      display: flex;
+    }
+
+    #map-pane { flex: 1; min-width: 0; position: relative; }
+    #map { width: 100%; height: 100%; }
+
+    #list-pane {
+      width: 420px; min-width: 320px; max-width: 45vw;
+      background: var(--tan); border-left: 2px solid var(--tan-dark);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.25s ease;
+    }
+    #list-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
+
+    /* ── Filter bar ── */
+    #filter-bar {
+      background: var(--green-dark); color: var(--white);
+      padding: 0 12px; display: flex; align-items: center; gap: 8px;
+      height: 40px; flex-shrink: 0;
+    }
+    #filter-bar span { font-size: 13px; font-weight: 600; flex: 1; }
+    #filter-toggle-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.3);
+      color: var(--white); padding: 4px 10px; border-radius: var(--radius);
+      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
+    }
+    #clear-filters-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.3);
+      color: #f9c74f; padding: 4px 10px; border-radius: var(--radius);
+      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif; display: none;
+    }
+
+    #filter-panel {
+      background: var(--white); border-bottom: 1px solid var(--tan-dark);
+      padding: 10px 12px; display: none; overflow-y: auto; max-height: 45vh; flex-shrink: 0;
+    }
+    #filter-panel.open { display: block; }
+
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .filter-grid input, .filter-grid select {
+      width: 100%; padding: 5px 7px; font-size: 12px; font-family: 'Cabin', sans-serif;
+      border: 1px solid #ccc; border-radius: 4px; background: var(--white); color: var(--text);
+    }
+    .filter-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .filter-field { display: flex; flex-direction: column; }
+    .filter-range { display: flex; gap: 4px; }
+    .filter-range input { flex: 1; }
+
+    /* ── Catches list ── */
+    #catches-list-wrap { flex: 1; overflow-y: auto; padding: 8px; }
+    #list-count { font-size: 12px; color: var(--text-muted); padding: 4px 4px 8px; }
+
+    .catch-card {
+      background: var(--white); border: 1px solid var(--tan-dark);
+      border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+      cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .catch-card:hover { box-shadow: var(--shadow); border-color: var(--green-mid); }
+    .catch-card.expanded { border-color: var(--green-mid); }
+
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--green-dark); }
+    .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .card-actions button {
+      border: none; border-radius: 4px; padding: 4px 8px;
+      font-size: 11px; font-family: 'Cabin', sans-serif; cursor: pointer; font-weight: 600;
+    }
+    .btn-edit { background: var(--water-light); color: var(--water); }
+    .btn-edit:hover { background: var(--water); color: var(--white); }
+    .btn-delete { background: #fde8e8; color: #c0392b; }
+    .btn-delete:hover { background: #c0392b; color: var(--white); }
+
+    .card-detail {
+      display: none; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid var(--tan-dark); font-size: 12px; line-height: 2; color: var(--text);
+    }
+    .card-detail.open { display: block; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .detail-section {
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 6px 0 2px; grid-column: 1/-1;
+    }
+
+    /* ── Catch Form ── */
+    .form-popup {
+      position: absolute; top: 10px; left: 10px;
+      background: var(--white); padding: 12px; border-radius: var(--radius);
+      box-shadow: var(--shadow); width: 280px; max-height: 92vh;
+      overflow-y: auto; display: none; z-index: 1000;
+    }
+    .form-popup h4 { font-family: 'Cabin Condensed', sans-serif; font-size: 16px; color: var(--green-dark); margin-bottom: 8px; }
 
     .section-label {
-      font-size: 10px;
-      font-weight: bold;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin: 10px 0 4px 0;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 2px;
+      font-size: 10px; font-weight: 600; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin: 10px 0 4px; border-bottom: 1px solid var(--tan-dark); padding-bottom: 2px;
     }
 
-    input, select {
-      width: 100%;
-      margin-bottom: 5px;
-      padding: 7px 6px;
-      font-size: 13px;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    .form-popup input, .form-popup select {
+      width: 100%; margin-bottom: 5px; padding: 7px 6px; font-size: 13px;
+      font-family: 'Cabin', sans-serif; border: 1px solid #ccc; border-radius: 4px; color: var(--text);
     }
-
-    input[readonly] { background: #f5f5f5; color: #555; }
+    .form-popup input[readonly] { background: #f5f5f5; color: #777; }
 
     .species-row { display: flex; gap: 4px; margin-bottom: 5px; }
     .species-row select { flex: 1; margin-bottom: 0; }
     .species-row button {
-      padding: 6px 8px;
-      font-size: 12px;
-      white-space: nowrap;
-      background: #eee;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
+      padding: 6px 8px; font-size: 12px; background: #eee; border: 1px solid #ccc;
+      border-radius: 4px; cursor: pointer; white-space: nowrap; font-family: 'Cabin', sans-serif;
     }
 
     .btn-row { display: flex; gap: 6px; margin-top: 10px; }
-    .btn-row button { flex: 1; padding: 8px; font-size: 13px; border: none; border-radius: 4px; cursor: pointer; }
-    .btn-save { background: #2a7a2a; color: white; }
-    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
-    .btn-cancel { background: #ddd; color: #333; }
-
-    .status-msg { font-size: 12px; color: #666; text-align: center; min-height: 16px; margin-top: 4px; }
-
-    .username-popup {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
-      z-index: 2000;
-      width: 260px;
-      box-sizing: border-box;
+    .btn-row button {
+      flex: 1; padding: 8px; font-size: 13px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; border: none; border-radius: 4px; cursor: pointer;
     }
-    .username-popup h4 { margin: 0 0 10px 0; }
-    .username-popup input { width: 100%; margin-bottom: 8px; padding: 8px; font-size: 14px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    .username-popup button { width: 100%; padding: 8px; background: #2a7a2a; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+    .btn-save { background: var(--green-mid); color: var(--white); }
+    .btn-save:hover { background: var(--green-dark); }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-cancel { background: var(--tan-dark); color: var(--text); }
+    .status-msg { font-size: 12px; color: var(--text-muted); text-align: center; min-height: 16px; margin-top: 4px; }
+
+    /* ── Username popup ── */
+    .username-popup {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--white); padding: 24px; border-radius: var(--radius);
+      box-shadow: var(--shadow); z-index: 4000; width: 280px;
+    }
+    .username-popup h4 { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; color: var(--green-dark); margin-bottom: 8px; }
+    .username-popup p { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+    .username-popup input {
+      width: 100%; margin-bottom: 10px; padding: 9px 8px; font-size: 14px;
+      font-family: 'Cabin', sans-serif; border: 1px solid #ccc; border-radius: 4px;
+    }
+    .username-popup button {
+      width: 100%; padding: 9px; background: var(--green-mid); color: var(--white);
+      border: none; border-radius: 4px; font-size: 14px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; cursor: pointer;
+    }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 3999; display: none; }
 
     .popup-button {
-      margin-top: 5px;
-      padding: 3px 8px;
-      font-size: 12px;
-      cursor: pointer;
-      background: #eee;
-      border: 1px solid #ccc;
-      border-radius: 3px;
+      margin-top: 5px; padding: 3px 8px; font-size: 12px; cursor: pointer;
+      background: #eee; border: 1px solid #ccc; border-radius: 3px; font-family: 'Cabin', sans-serif;
     }
-
-    .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.8; }
+    .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.9; }
     .more-info.open { display: block; }
+
+    /* ── Mobile ── */
+    @media (max-width: 700px) {
+      #list-pane {
+        display: none; position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0;
+        width: 100% !important; max-width: 100%; z-index: 2500;
+      }
+      #list-pane.mobile-open { display: flex; }
+      #map-pane.mobile-hidden { display: none; }
+      .form-popup { width: calc(100vw - 20px); max-width: 340px; }
+    }
   </style>
 </head>
 <body>
 
-<div id="map"></div>
+<div class="overlay" id="overlay"></div>
 
 <div id="usernamePopup" class="username-popup" style="display:none;">
-  <h4>Welcome! Choose a username</h4>
+  <h4>🎣 Welcome!</h4>
+  <p>Choose a username to get started.</p>
   <input type="text" id="usernameInput" placeholder="Enter username" />
   <button onclick="saveUsername()">Start Fishing</button>
 </div>
 
-<div id="catchForm" class="form-popup">
-  <h4>🎣 Log Catch</h4>
+<div id="header">
+  <span id="header-title">🎣 FISHING MAP</span>
+  <div id="header-right">
+    <span id="username-display"></span>
+    <button class="hdr-btn" id="view-toggle-btn" onclick="toggleListView()">☰ List View</button>
+  </div>
+</div>
 
-  <!-- REQUIRED -->
-  <div class="section-label">Required</div>
-  <input type="text" id="waterBody" placeholder="Body of Water" />
-  <div class="species-row">
-    <select id="species"></select>
-    <button onclick="addSpecies()">+ New</button>
+<div id="app">
+  <div id="map-pane">
+    <div id="map"></div>
+
+    <div id="catchForm" class="form-popup">
+      <h4 id="form-title">🎣 Log Catch</h4>
+
+      <div class="section-label">Required</div>
+      <input type="text" id="waterBody" placeholder="Body of Water" />
+      <div class="species-row">
+        <select id="species"></select>
+        <button onclick="addSpecies()">+ New</button>
+      </div>
+
+      <div class="section-label">Date &amp; Time</div>
+      <input type="date" id="catchDate" />
+      <input type="time" id="catchTime" />
+
+      <div class="section-label">Catch Details</div>
+      <input type="number" id="size" placeholder="Size (inches)" />
+      <input type="number" id="weight" placeholder="Weight (lbs)" step="0.1" />
+      <input type="text" id="bait" placeholder="Bait / Lure" />
+      <input type="text" id="rig" placeholder="Rig Type" />
+      <input type="text" id="retrieve" placeholder="Retrieve Style" />
+      <input type="number" id="depth" placeholder="Depth Fished (ft)" />
+      <input type="number" id="waterTemp" placeholder="Water Temp (°F)" />
+
+      <div class="section-label">Conditions</div>
+      <input type="number" id="airTemp" placeholder="Air Temp (°F)" />
+      <select id="weatherCondition">
+        <option value="">-- Weather --</option>
+        <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
+        <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
+        <option>Snow</option><option>Thunderstorm</option>
+      </select>
+      <input type="number" id="windSpeed" placeholder="Wind Speed (mph)" />
+      <select id="windDirection">
+        <option value="">-- Wind Direction --</option>
+        <option>N</option><option>NE</option><option>E</option><option>SE</option>
+        <option>S</option><option>SW</option><option>W</option><option>NW</option>
+        <option>Calm</option>
+      </select>
+      <input type="number" id="pressure" placeholder="Barometric Pressure (inHg)" step="0.01" />
+
+      <div class="section-label">Auto-Calculated</div>
+      <input type="text" id="moonPhase" placeholder="Moon Phase" readonly />
+      <select id="season">
+        <option value="">-- Season --</option>
+        <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
+      </select>
+
+      <div class="status-msg" id="statusMsg"></div>
+      <div class="btn-row">
+        <button class="btn-save" id="saveBtn" onclick="saveCatch()">Save Catch</button>
+        <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+      </div>
+    </div>
   </div>
 
-  <!-- DATE & TIME -->
-  <div class="section-label">Date & Time</div>
-  <input type="date" id="catchDate" />
-  <input type="time" id="catchTime" />
+  <!-- LIST PANE -->
+  <div id="list-pane" class="hidden">
+    <div id="filter-bar">
+      <span id="list-count-bar">Catches</span>
+      <button id="clear-filters-btn" onclick="clearFilters()">✕ Clear</button>
+      <button id="filter-toggle-btn" onclick="toggleFilters()">▼ Filters</button>
+    </div>
 
-  <!-- CATCH DETAILS -->
-  <div class="section-label">Catch Details</div>
-  <input type="number" id="size" placeholder="Size (inches)" />
-  <input type="number" id="weight" placeholder="Weight (lbs)" step="0.1" />
-  <input type="text" id="bait" placeholder="Bait / Lure" />
-  <input type="text" id="rig" placeholder="Rig Type" />
-  <input type="text" id="retrieve" placeholder="Retrieve Style" />
-  <input type="number" id="depth" placeholder="Depth Fished (ft)" />
-  <input type="number" id="waterTemp" placeholder="Water Temp (°F)" />
+    <div id="filter-panel">
+      <div class="filter-grid">
+        <div class="filter-field">
+          <div class="filter-label">Water Body</div>
+          <input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Species</div>
+          <input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Username</div>
+          <input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Season</div>
+          <select id="f-season" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Weather</div>
+          <select id="f-weather" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
+            <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
+            <option>Snow</option><option>Thunderstorm</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Wind Direction</div>
+          <select id="f-wind-dir" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>N</option><option>NE</option><option>E</option><option>SE</option>
+            <option>S</option><option>SW</option><option>W</option><option>NW</option><option>Calm</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Moon Phase</div>
+          <select id="f-moon" onchange="applyFilters()">
+            <option value="">Any</option>
+            <option>New Moon</option><option>Waxing Crescent</option><option>First Quarter</option>
+            <option>Waxing Gibbous</option><option>Full Moon</option><option>Waning Gibbous</option>
+            <option>Last Quarter</option><option>Waning Crescent</option>
+          </select>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Bait / Lure</div>
+          <input type="text" id="f-bait" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Rig</div>
+          <input type="text" id="f-rig" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Retrieve</div>
+          <input type="text" id="f-retrieve" placeholder="Any" oninput="applyFilters()" />
+        </div>
+        <div class="filter-field" style="grid-column:1/-1">
+          <div class="filter-label">Date Range</div>
+          <div class="filter-range">
+            <input type="date" id="f-date-from" onchange="applyFilters()" />
+            <input type="date" id="f-date-to" onchange="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Size (in)</div>
+          <div class="filter-range">
+            <input type="number" id="f-size-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-size-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Weight (lbs)</div>
+          <div class="filter-range">
+            <input type="number" id="f-wt-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-wt-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Depth (ft)</div>
+          <div class="filter-range">
+            <input type="number" id="f-depth-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-depth-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Water Temp (°F)</div>
+          <div class="filter-range">
+            <input type="number" id="f-wtemp-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-wtemp-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Air Temp (°F)</div>
+          <div class="filter-range">
+            <input type="number" id="f-atemp-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-atemp-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Wind Speed (mph)</div>
+          <div class="filter-range">
+            <input type="number" id="f-wind-min" placeholder="Min" oninput="applyFilters()" />
+            <input type="number" id="f-wind-max" placeholder="Max" oninput="applyFilters()" />
+          </div>
+        </div>
+        <div class="filter-field">
+          <div class="filter-label">Pressure (inHg)</div>
+          <div class="filter-range">
+            <input type="number" id="f-pres-min" placeholder="Min" oninput="applyFilters()" step="0.01" />
+            <input type="number" id="f-pres-max" placeholder="Max" oninput="applyFilters()" step="0.01" />
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <!-- CONDITIONS -->
-  <div class="section-label">Conditions</div>
-  <input type="number" id="airTemp" placeholder="Air Temp (°F)" />
-  <select id="weatherCondition">
-    <option value="">-- Weather --</option>
-    <option>Clear</option>
-    <option>Partly Cloudy</option>
-    <option>Overcast</option>
-    <option>Light Rain</option>
-    <option>Heavy Rain</option>
-    <option>Fog</option>
-    <option>Snow</option>
-    <option>Thunderstorm</option>
-  </select>
-  <input type="number" id="windSpeed" placeholder="Wind Speed (mph)" />
-  <select id="windDirection">
-    <option value="">-- Wind Direction --</option>
-    <option>N</option><option>NE</option><option>E</option><option>SE</option>
-    <option>S</option><option>SW</option><option>W</option><option>NW</option>
-    <option>Calm</option>
-  </select>
-  <input type="number" id="pressure" placeholder="Barometric Pressure (inHg)" step="0.01" />
-
-  <!-- AUTO-CALCULATED -->
-  <div class="section-label">Auto-Calculated</div>
-  <input type="text" id="moonPhase" placeholder="Moon Phase" readonly />
-  <select id="season">
-    <option value="">-- Season --</option>
-    <option>Spring</option>
-    <option>Summer</option>
-    <option>Fall</option>
-    <option>Winter</option>
-  </select>
-
-  <div class="status-msg" id="statusMsg"></div>
-  <div class="btn-row">
-    <button class="btn-save" id="saveBtn" onclick="saveCatch()">Save Catch</button>
-    <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+    <div id="catches-list-wrap">
+      <div id="catches-list"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
-// ── Supabase ────────────────────────────────────────────────────────────────
+// ── Supabase ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://jtyporonxtgclzvkuttt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0eXBvcm9ueHRnY2x6dmt1dHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzgwNTIsImV4cCI6MjA5MjU1NDA1Mn0._n-95mvIjBvg-qqBB6VVp-DXmg3WsQTF1oiploM_P9I";
 
@@ -192,7 +437,7 @@ async function dbFetch(path, method = "GET", body = null) {
       "apikey": SUPABASE_KEY,
       "Authorization": "Bearer " + SUPABASE_KEY,
       "Content-Type": "application/json",
-      "Prefer": method === "POST" ? "return=representation" : ""
+      "Prefer": (method === "POST" || method === "PATCH") ? "return=representation" : ""
     }
   };
   if (body) opts.body = JSON.stringify(body);
@@ -201,15 +446,21 @@ async function dbFetch(path, method = "GET", body = null) {
   return res.json().catch(() => null);
 }
 
-// ── Species ─────────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────────
+let allCatches = [];
+let filteredCatches = [];
+let markers = {};
+let editingId = null;
+let tempMarker = null;
+let clickedLatLng = null;
+let listOpen = false;
+
+// ── Species ───────────────────────────────────────────────────────────────────
 const DEFAULT_SPECIES = ["Largemouth Bass","Smallmouth Bass","Rainbow Trout","Brown Trout","Crappie","Bluegill","Walleye","Northern Pike","Catfish"];
 
 function loadSpecies(selectVal) {
   let list = JSON.parse(localStorage.getItem("speciesList"));
-  if (!list) {
-    list = DEFAULT_SPECIES;
-    localStorage.setItem("speciesList", JSON.stringify(list));
-  }
+  if (!list) { list = DEFAULT_SPECIES; localStorage.setItem("speciesList", JSON.stringify(list)); }
   const sel = document.getElementById("species");
   sel.innerHTML = "";
   list.forEach(s => {
@@ -225,17 +476,18 @@ function addSpecies() {
   if (!name || !name.trim()) return;
   const trimmed = name.trim();
   let list = JSON.parse(localStorage.getItem("speciesList"));
-  if (!list.includes(trimmed)) {
-    list.push(trimmed);
-    localStorage.setItem("speciesList", JSON.stringify(list));
-  }
+  if (!list.includes(trimmed)) { list.push(trimmed); localStorage.setItem("speciesList", JSON.stringify(list)); }
   loadSpecies(trimmed);
 }
 
-// ── Username ─────────────────────────────────────────────────────────────────
+// ── Username ──────────────────────────────────────────────────────────────────
 function checkUsername() {
-  if (!localStorage.getItem("username")) {
+  const u = localStorage.getItem("username");
+  if (!u) {
     document.getElementById("usernamePopup").style.display = "block";
+    document.getElementById("overlay").style.display = "block";
+  } else {
+    document.getElementById("username-display").textContent = "👤 " + u;
   }
 }
 
@@ -244,181 +496,159 @@ function saveUsername() {
   if (!val) return;
   localStorage.setItem("username", val);
   document.getElementById("usernamePopup").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+  document.getElementById("username-display").textContent = "👤 " + val;
 }
 
-// ── Moon Phase ───────────────────────────────────────────────────────────────
+// ── Moon / Season ─────────────────────────────────────────────────────────────
 function getMoonPhase(date) {
-  const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
-                  "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
-  let y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
-  if (m < 3) { y--; m += 12; }
-  m++;
-  let jd = 365.25 * y + 30.6 * m + d - 694039.09;
-  jd /= 29.5305882;
-  jd -= Math.floor(jd);
-  let b = Math.round(jd * 8);
-  if (b >= 8) b = 0;
+  const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
+  let y = date.getFullYear(), m = date.getMonth()+1, d = date.getDate();
+  if (m < 3) { y--; m += 12; } m++;
+  let jd = 365.25*y + 30.6*m + d - 694039.09;
+  jd /= 29.5305882; jd -= Math.floor(jd);
+  let b = Math.round(jd * 8); if (b >= 8) b = 0;
   return phases[b];
 }
-
 function getSeason(date) {
-  const m = date.getMonth() + 1;
-  if (m >= 3 && m <= 5) return "Spring";
-  if (m >= 6 && m <= 8) return "Summer";
-  if (m >= 9 && m <= 11) return "Fall";
-  return "Winter";
+  const m = date.getMonth()+1;
+  if (m>=3&&m<=5) return "Spring"; if (m>=6&&m<=8) return "Summer";
+  if (m>=9&&m<=11) return "Fall"; return "Winter";
 }
-
 function prefillDateTime() {
   const now = new Date();
   document.getElementById("catchDate").value = now.toISOString().split("T")[0];
-  document.getElementById("catchTime").value = now.toTimeString().slice(0, 5);
+  document.getElementById("catchTime").value = now.toTimeString().slice(0,5);
   updateAutoFields(now);
 }
-
 function updateAutoFields(date) {
   document.getElementById("moonPhase").value = getMoonPhase(date);
   document.getElementById("season").value = getSeason(date);
 }
-
-document.getElementById("catchDate").addEventListener("change", function () {
+document.getElementById("catchDate").addEventListener("change", function() {
   if (this.value) updateAutoFields(new Date(this.value + "T12:00:00"));
 });
 
-// ── Map ──────────────────────────────────────────────────────────────────────
+// ── Map ───────────────────────────────────────────────────────────────────────
 const map = L.map("map").setView([46.731, -117.179], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-let tempMarker = null;
-let clickedLatLng = null;
-
-map.on("click", function (e) {
+map.on("click", function(e) {
+  if (editingId) return;
   if (tempMarker) map.removeLayer(tempMarker);
   clickedLatLng = e.latlng;
   tempMarker = L.marker(e.latlng).addTo(map);
   prefillDateTime();
+  clearFormFields();
+  loadSpecies();
+  document.getElementById("form-title").textContent = "🎣 Log Catch";
   document.getElementById("catchForm").style.display = "block";
   document.getElementById("statusMsg").textContent = "";
 });
 
+// ── Form helpers ──────────────────────────────────────────────────────────────
 function closeForm() {
   document.getElementById("catchForm").style.display = "none";
   document.getElementById("statusMsg").textContent = "";
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
-  clearForm();
+  editingId = null;
+  clearFormFields();
 }
 
-function clearForm() {
+function clearFormFields() {
   ["waterBody","size","weight","bait","rig","retrieve","depth",
-   "waterTemp","airTemp","windSpeed","pressure"].forEach(id => {
-    document.getElementById(id).value = "";
-  });
+   "waterTemp","airTemp","windSpeed","pressure"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("weatherCondition").value = "";
   document.getElementById("windDirection").value = "";
   document.getElementById("moonPhase").value = "";
   document.getElementById("season").value = "";
 }
 
-// ── Popup HTML ───────────────────────────────────────────────────────────────
-function buildPopup(c) {
-  const id = "mi-" + (c.id || Date.now());
-  const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null]
-    .filter(Boolean).join(" ") || "—";
-
-  return `
-    <b>${c.species}</b><br>
-    <span style="font-size:12px;">📍 ${c.water_body} &nbsp;|&nbsp; 👤 ${c.username}</span><br>
-    <span style="font-size:12px;">📅 ${c.catch_date || "—"} &nbsp; ${c.catch_time || ""}</span><br>
-    <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Info</button>
-    <div id="${id}" class="more-info">
-      <b>Catch</b><br>
-      Size: ${c.size_in != null ? c.size_in + " in" : "—"}<br>
-      Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}<br>
-      Bait: ${c.bait || "—"}<br>
-      Rig: ${c.rig || "—"}<br>
-      Retrieve: ${c.retrieve || "—"}<br>
-      Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}<br>
-      Water Temp: ${c.water_temp_f != null ? c.water_temp_f + " °F" : "—"}<br>
-      <b>Conditions</b><br>
-      Air Temp: ${c.air_temp_f != null ? c.air_temp_f + " °F" : "—"}<br>
-      Weather: ${c.weather || "—"}<br>
-      Wind: ${wind}<br>
-      Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"}<br>
-      Moon: ${c.moon_phase || "—"}<br>
-      Season: ${c.season || "—"}<br>
-      Coords: ${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)}
-    </div>
-  `;
+function populateForm(c) {
+  document.getElementById("waterBody").value = c.water_body || "";
+  document.getElementById("catchDate").value = c.catch_date || "";
+  document.getElementById("catchTime").value = c.catch_time ? c.catch_time.slice(0,5) : "";
+  document.getElementById("size").value = c.size_in ?? "";
+  document.getElementById("weight").value = c.weight_lbs ?? "";
+  document.getElementById("bait").value = c.bait || "";
+  document.getElementById("rig").value = c.rig || "";
+  document.getElementById("retrieve").value = c.retrieve || "";
+  document.getElementById("depth").value = c.depth_ft ?? "";
+  document.getElementById("waterTemp").value = c.water_temp_f ?? "";
+  document.getElementById("airTemp").value = c.air_temp_f ?? "";
+  document.getElementById("weatherCondition").value = c.weather || "";
+  document.getElementById("windSpeed").value = c.wind_speed ?? "";
+  document.getElementById("windDirection").value = c.wind_direction || "";
+  document.getElementById("pressure").value = c.pressure_inhg ?? "";
+  document.getElementById("moonPhase").value = c.moon_phase || "";
+  document.getElementById("season").value = c.season || "";
+  loadSpecies(c.species);
 }
 
-function toggleMoreInfo(btn, id) {
-  const el = document.getElementById(id);
-  el.classList.toggle("open");
-  btn.textContent = el.classList.contains("open") ? "Less Info" : "More Info";
+function readForm() {
+  return {
+    water_body:      document.getElementById("waterBody").value.trim() || null,
+    species:         document.getElementById("species").value || null,
+    catch_date:      document.getElementById("catchDate").value || null,
+    catch_time:      document.getElementById("catchTime").value || null,
+    size_in:         parseFloat(document.getElementById("size").value) || null,
+    weight_lbs:      parseFloat(document.getElementById("weight").value) || null,
+    bait:            document.getElementById("bait").value.trim() || null,
+    rig:             document.getElementById("rig").value.trim() || null,
+    retrieve:        document.getElementById("retrieve").value.trim() || null,
+    depth_ft:        parseFloat(document.getElementById("depth").value) || null,
+    water_temp_f:    parseFloat(document.getElementById("waterTemp").value) || null,
+    air_temp_f:      parseFloat(document.getElementById("airTemp").value) || null,
+    weather:         document.getElementById("weatherCondition").value || null,
+    wind_speed:      parseFloat(document.getElementById("windSpeed").value) || null,
+    wind_direction:  document.getElementById("windDirection").value || null,
+    pressure_inhg:   parseFloat(document.getElementById("pressure").value) || null,
+    moon_phase:      document.getElementById("moonPhase").value || null,
+    season:          document.getElementById("season").value || null
+  };
 }
 
-// ── Load Catches ─────────────────────────────────────────────────────────────
-async function loadCatches() {
-  try {
-    const catches = await dbFetch("catches?select=*&order=created_at.desc");
-    (catches || []).forEach(c => {
-      L.marker([c.lat, c.lng]).addTo(map).bindPopup(buildPopup(c));
-    });
-  } catch (err) {
-    console.error("Failed to load catches:", err);
-  }
-}
-
-// ── Save Catch ────────────────────────────────────────────────────────────────
+// ── Save / Update ─────────────────────────────────────────────────────────────
 async function saveCatch() {
   const waterBody = document.getElementById("waterBody").value.trim();
   const species = document.getElementById("species").value;
-
-  if (!waterBody || !species) {
-    alert("Body of Water and Species are required.");
-    return;
-  }
+  if (!waterBody || !species) { alert("Body of Water and Species are required."); return; }
 
   const saveBtn = document.getElementById("saveBtn");
   const statusMsg = document.getElementById("statusMsg");
   saveBtn.disabled = true;
   statusMsg.textContent = "Saving...";
 
-  const data = {
-    username:      localStorage.getItem("username") || "anonymous",
-    lat:           clickedLatLng.lat,
-    lng:           clickedLatLng.lng,
-    water_body:    waterBody,
-    species:       species,
-    catch_date:    document.getElementById("catchDate").value || null,
-    catch_time:    document.getElementById("catchTime").value || null,
-    size_in:       parseFloat(document.getElementById("size").value) || null,
-    weight_lbs:    parseFloat(document.getElementById("weight").value) || null,
-    bait:          document.getElementById("bait").value.trim() || null,
-    rig:           document.getElementById("rig").value.trim() || null,
-    retrieve:      document.getElementById("retrieve").value.trim() || null,
-    depth_ft:      parseFloat(document.getElementById("depth").value) || null,
-    water_temp_f:  parseFloat(document.getElementById("waterTemp").value) || null,
-    air_temp_f:    parseFloat(document.getElementById("airTemp").value) || null,
-    weather:       document.getElementById("weatherCondition").value || null,
-    wind_speed:    parseFloat(document.getElementById("windSpeed").value) || null,
-    wind_direction:document.getElementById("windDirection").value || null,
-    pressure_inhg: parseFloat(document.getElementById("pressure").value) || null,
-    moon_phase:    document.getElementById("moonPhase").value || null,
-    season:        document.getElementById("season").value || null
-  };
-
   try {
-    const result = await dbFetch("catches", "POST", data);
-    const saved = Array.isArray(result) ? result[0] : data;
-
-    if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
-    L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
-
-    statusMsg.textContent = "Saved!";
-    setTimeout(closeForm, 600);
+    if (editingId) {
+      const data = readForm();
+      const result = await dbFetch("catches?id=eq." + editingId, "PATCH", data);
+      const updated = Array.isArray(result) && result[0]
+        ? result[0]
+        : { ...allCatches.find(c => c.id === editingId), ...data };
+      const idx = allCatches.findIndex(c => c.id === editingId);
+      if (idx !== -1) allCatches[idx] = updated;
+      if (markers[editingId]) markers[editingId].setPopupContent(buildPopup(updated));
+      statusMsg.textContent = "Updated!";
+    } else {
+      const data = {
+        username: localStorage.getItem("username") || "anonymous",
+        lat: clickedLatLng.lat,
+        lng: clickedLatLng.lng,
+        ...readForm()
+      };
+      const result = await dbFetch("catches", "POST", data);
+      const saved = Array.isArray(result) && result[0] ? result[0] : { ...data, id: "tmp-" + Date.now() };
+      allCatches.unshift(saved);
+      if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
+      const m = L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
+      markers[saved.id] = m;
+      statusMsg.textContent = "Saved!";
+    }
+    applyFilters();
+    setTimeout(closeForm, 700);
   } catch (err) {
     console.error("Save failed:", err);
     statusMsg.textContent = "Save failed — check console.";
@@ -427,7 +657,228 @@ async function saveCatch() {
   }
 }
 
-// ── Init ─────────────────────────────────────────────────────────────────────
+// ── Delete ────────────────────────────────────────────────────────────────────
+async function deleteCatch(id) {
+  if (!confirm("Delete this catch? This cannot be undone.")) return;
+  try {
+    await dbFetch("catches?id=eq." + id, "DELETE");
+    if (markers[id]) { map.removeLayer(markers[id]); delete markers[id]; }
+    allCatches = allCatches.filter(c => c.id !== id);
+    applyFilters();
+  } catch (err) {
+    console.error("Delete failed:", err);
+    alert("Delete failed — check console.");
+  }
+}
+
+// ── Edit ──────────────────────────────────────────────────────────────────────
+function editCatch(id) {
+  const c = allCatches.find(x => x.id === id);
+  if (!c) return;
+  editingId = id;
+  clickedLatLng = { lat: c.lat, lng: c.lng };
+  populateForm(c);
+  document.getElementById("form-title").textContent = "✏️ Edit Catch";
+  document.getElementById("catchForm").style.display = "block";
+  document.getElementById("statusMsg").textContent = "";
+  if (window.innerWidth <= 700) {
+    document.getElementById("list-pane").classList.remove("mobile-open");
+    document.getElementById("map-pane").classList.remove("mobile-hidden");
+    document.getElementById("view-toggle-btn").textContent = "☰ List View";
+    document.getElementById("view-toggle-btn").classList.remove("active");
+    listOpen = false;
+  }
+  map.setView([c.lat, c.lng]);
+}
+
+// ── Popup ─────────────────────────────────────────────────────────────────────
+function buildPopup(c) {
+  const id = "mi-" + c.id;
+  const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") || "—";
+  return `
+    <b>${c.species}</b><br>
+    <span style="font-size:12px;">📍 ${c.water_body || "—"} | 👤 ${c.username}</span><br>
+    <span style="font-size:12px;">📅 ${c.catch_date || "—"} ${c.catch_time ? c.catch_time.slice(0,5) : ""}</span><br>
+    <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Info</button>
+    <div id="${id}" class="more-info">
+      Size: ${c.size_in != null ? c.size_in + " in" : "—"} &nbsp; Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}<br>
+      Bait: ${c.bait || "—"} &nbsp; Rig: ${c.rig || "—"}<br>
+      Retrieve: ${c.retrieve || "—"} &nbsp; Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}<br>
+      Water Temp: ${c.water_temp_f != null ? c.water_temp_f + "°F" : "—"} &nbsp; Air: ${c.air_temp_f != null ? c.air_temp_f + "°F" : "—"}<br>
+      Weather: ${c.weather || "—"} &nbsp; Wind: ${wind}<br>
+      Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"} &nbsp; Moon: ${c.moon_phase || "—"}<br>
+      Season: ${c.season || "—"}
+    </div>`;
+}
+
+function toggleMoreInfo(btn, id) {
+  const el = document.getElementById(id);
+  el.classList.toggle("open");
+  btn.textContent = el.classList.contains("open") ? "Less Info" : "More Info";
+}
+
+// ── List view toggle ──────────────────────────────────────────────────────────
+function toggleListView() {
+  listOpen = !listOpen;
+  const btn = document.getElementById("view-toggle-btn");
+  const listPane = document.getElementById("list-pane");
+  const mapPane = document.getElementById("map-pane");
+
+  if (window.innerWidth <= 700) {
+    listPane.classList.toggle("mobile-open", listOpen);
+    mapPane.classList.toggle("mobile-hidden", listOpen);
+  } else {
+    listPane.classList.toggle("hidden", !listOpen);
+    setTimeout(() => map.invalidateSize(), 260);
+  }
+
+  btn.textContent = listOpen ? "🗺 Map" : "☰ List View";
+  btn.classList.toggle("active", listOpen);
+  if (listOpen) renderList(filteredCatches);
+}
+
+// ── Render list ───────────────────────────────────────────────────────────────
+function renderList(catches) {
+  const container = document.getElementById("catches-list");
+  const countBar = document.getElementById("list-count-bar");
+  countBar.textContent = catches.length + " catch" + (catches.length !== 1 ? "es" : "");
+  container.innerHTML = "";
+
+  if (!catches.length) {
+    container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 4px;">No catches match the current filters.</p>';
+    return;
+  }
+
+  catches.forEach(c => {
+    const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") || "—";
+    const card = document.createElement("div");
+    card.className = "catch-card";
+    card.innerHTML = `
+      <div class="card-header">
+        <div>
+          <div class="card-title">${c.species} — ${c.water_body || "Unknown"}</div>
+          <div class="card-sub">👤 ${c.username} &nbsp;|&nbsp; 📅 ${c.catch_date || "—"} ${c.catch_time ? c.catch_time.slice(0,5) : ""}</div>
+        </div>
+        <div class="card-actions">
+          <button class="btn-edit" onclick="event.stopPropagation();editCatch('${c.id}')">Edit</button>
+          <button class="btn-delete" onclick="event.stopPropagation();deleteCatch('${c.id}')">Delete</button>
+        </div>
+      </div>
+      <div class="card-detail" id="cd-${c.id}">
+        <div class="detail-grid">
+          <div class="detail-section">Catch Details</div>
+          <div>Size: ${c.size_in != null ? c.size_in + " in" : "—"}</div>
+          <div>Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}</div>
+          <div>Bait: ${c.bait || "—"}</div>
+          <div>Rig: ${c.rig || "—"}</div>
+          <div>Retrieve: ${c.retrieve || "—"}</div>
+          <div>Water Temp: ${c.water_temp_f != null ? c.water_temp_f + "°F" : "—"}</div>
+          <div>Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}</div>
+          <div class="detail-section">Conditions</div>
+          <div>Air Temp: ${c.air_temp_f != null ? c.air_temp_f + "°F" : "—"}</div>
+          <div>Weather: ${c.weather || "—"}</div>
+          <div>Wind: ${wind}</div>
+          <div>Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"}</div>
+          <div>Moon: ${c.moon_phase || "—"}</div>
+          <div>Season: ${c.season || "—"}</div>
+          <div class="detail-section">Location</div>
+          <div style="grid-column:1/-1">Lat ${parseFloat(c.lat).toFixed(5)}, Lng ${parseFloat(c.lng).toFixed(5)}</div>
+        </div>
+      </div>`;
+    card.addEventListener("click", () => {
+      document.getElementById("cd-" + c.id).classList.toggle("open");
+      card.classList.toggle("expanded");
+    });
+    container.appendChild(card);
+  });
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+function toggleFilters() {
+  const panel = document.getElementById("filter-panel");
+  panel.classList.toggle("open");
+  document.getElementById("filter-toggle-btn").textContent = panel.classList.contains("open") ? "▲ Filters" : "▼ Filters";
+}
+
+function applyFilters() {
+  const g = id => document.getElementById(id).value.trim().toLowerCase();
+  const gn = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
+
+  const water = g("f-water"), species = g("f-species"), user = g("f-user");
+  const season = g("f-season"), weather = g("f-weather"), windDir = g("f-wind-dir");
+  const moon = g("f-moon"), bait = g("f-bait"), rig = g("f-rig"), retrieve = g("f-retrieve");
+  const dateFrom = document.getElementById("f-date-from").value;
+  const dateTo = document.getElementById("f-date-to").value;
+  const sizeMin = gn("f-size-min"), sizeMax = gn("f-size-max");
+  const wtMin = gn("f-wt-min"), wtMax = gn("f-wt-max");
+  const depMin = gn("f-depth-min"), depMax = gn("f-depth-max");
+  const wtempMin = gn("f-wtemp-min"), wtempMax = gn("f-wtemp-max");
+  const atempMin = gn("f-atemp-min"), atempMax = gn("f-atemp-max");
+  const windMin = gn("f-wind-min"), windMax = gn("f-wind-max");
+  const presMin = gn("f-pres-min"), presMax = gn("f-pres-max");
+
+  filteredCatches = allCatches.filter(c => {
+    if (water && !(c.water_body||"").toLowerCase().includes(water)) return false;
+    if (species && !(c.species||"").toLowerCase().includes(species)) return false;
+    if (user && !(c.username||"").toLowerCase().includes(user)) return false;
+    if (season && (c.season||"").toLowerCase() !== season) return false;
+    if (weather && (c.weather||"").toLowerCase() !== weather) return false;
+    if (windDir && (c.wind_direction||"").toLowerCase() !== windDir) return false;
+    if (moon && (c.moon_phase||"").toLowerCase() !== moon) return false;
+    if (bait && !(c.bait||"").toLowerCase().includes(bait)) return false;
+    if (rig && !(c.rig||"").toLowerCase().includes(rig)) return false;
+    if (retrieve && !(c.retrieve||"").toLowerCase().includes(retrieve)) return false;
+    if (dateFrom && c.catch_date && c.catch_date < dateFrom) return false;
+    if (dateTo && c.catch_date && c.catch_date > dateTo) return false;
+    if (sizeMin !== null && (c.size_in == null || c.size_in < sizeMin)) return false;
+    if (sizeMax !== null && (c.size_in == null || c.size_in > sizeMax)) return false;
+    if (wtMin !== null && (c.weight_lbs == null || c.weight_lbs < wtMin)) return false;
+    if (wtMax !== null && (c.weight_lbs == null || c.weight_lbs > wtMax)) return false;
+    if (depMin !== null && (c.depth_ft == null || c.depth_ft < depMin)) return false;
+    if (depMax !== null && (c.depth_ft == null || c.depth_ft > depMax)) return false;
+    if (wtempMin !== null && (c.water_temp_f == null || c.water_temp_f < wtempMin)) return false;
+    if (wtempMax !== null && (c.water_temp_f == null || c.water_temp_f > wtempMax)) return false;
+    if (atempMin !== null && (c.air_temp_f == null || c.air_temp_f < atempMin)) return false;
+    if (atempMax !== null && (c.air_temp_f == null || c.air_temp_f > atempMax)) return false;
+    if (windMin !== null && (c.wind_speed == null || c.wind_speed < windMin)) return false;
+    if (windMax !== null && (c.wind_speed == null || c.wind_speed > windMax)) return false;
+    if (presMin !== null && (c.pressure_inhg == null || c.pressure_inhg < presMin)) return false;
+    if (presMax !== null && (c.pressure_inhg == null || c.pressure_inhg > presMax)) return false;
+    return true;
+  });
+
+  document.getElementById("clear-filters-btn").style.display =
+    filteredCatches.length !== allCatches.length ? "inline-block" : "none";
+  if (listOpen) renderList(filteredCatches);
+}
+
+function clearFilters() {
+  ["f-water","f-species","f-user","f-bait","f-rig","f-retrieve",
+   "f-date-from","f-date-to","f-size-min","f-size-max","f-wt-min","f-wt-max",
+   "f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max","f-atemp-min","f-atemp-max",
+   "f-wind-min","f-wind-max","f-pres-min","f-pres-max"].forEach(id => document.getElementById(id).value = "");
+  ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => document.getElementById(id).value = "");
+  filteredCatches = [...allCatches];
+  document.getElementById("clear-filters-btn").style.display = "none";
+  if (listOpen) renderList(filteredCatches);
+}
+
+// ── Load catches ──────────────────────────────────────────────────────────────
+async function loadCatches() {
+  try {
+    const catches = await dbFetch("catches?select=*&order=created_at.desc");
+    allCatches = catches || [];
+    filteredCatches = [...allCatches];
+    allCatches.forEach(c => {
+      const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(buildPopup(c));
+      markers[c.id] = m;
+    });
+  } catch (err) {
+    console.error("Failed to load catches:", err);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
 loadSpecies();
 checkUsername();
 loadCatches();
