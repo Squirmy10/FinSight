@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Fishing Map</title>
+  <title>FinSight</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cabin:wght@400;600&family=Cabin+Condensed:wght@600&display=swap" rel="stylesheet" />
   <style>
@@ -77,10 +77,11 @@
       color: var(--white); padding: 4px 10px; border-radius: var(--radius);
       font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
     }
+    /* CHANGE 3: Clear button always visible */
     #clear-filters-btn {
       background: none; border: 1px solid rgba(255,255,255,0.3);
       color: #f9c74f; padding: 4px 10px; border-radius: var(--radius);
-      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif; display: none;
+      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
     }
 
     #filter-panel {
@@ -225,7 +226,8 @@
 </div>
 
 <div id="header">
-  <span id="header-title">🎣 FISHING MAP</span>
+  <!-- CHANGE 4: Title updated to FinSight -->
+  <span id="header-title">🎣 FinSight</span>
   <div id="header-right">
     <span id="username-display"></span>
     <button class="hdr-btn" id="view-toggle-btn" onclick="toggleListView()">☰ List View</button>
@@ -295,6 +297,7 @@
   <div id="list-pane" class="hidden">
     <div id="filter-bar">
       <span id="list-count-bar">Catches</span>
+      <!-- CHANGE 3: Clear button always shown (removed display:none) -->
       <button id="clear-filters-btn" onclick="clearFilters()">✕ Clear</button>
       <button id="filter-toggle-btn" onclick="toggleFilters()">▼ Filters</button>
     </div>
@@ -535,8 +538,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
+// CHANGE 1: If list is open, close it instead of opening the catch form
 map.on("click", function(e) {
   if (editingId) return;
+
+  // If list view is open, close it and do nothing else
+  if (listOpen) {
+    toggleListView();
+    return;
+  }
+
   if (tempMarker) map.removeLayer(tempMarker);
   clickedLatLng = e.latlng;
   tempMarker = L.marker(e.latlng).addTo(map);
@@ -800,6 +811,7 @@ function toggleFilters() {
   document.getElementById("filter-toggle-btn").textContent = panel.classList.contains("open") ? "▲ Filters" : "▼ Filters";
 }
 
+// CHANGE 2: applyFilters now also shows/hides map markers
 function applyFilters() {
   const g = id => document.getElementById(id).value.trim().toLowerCase();
   const gn = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
@@ -847,8 +859,19 @@ function applyFilters() {
     return true;
   });
 
-  document.getElementById("clear-filters-btn").style.display =
-    filteredCatches.length !== allCatches.length ? "inline-block" : "none";
+  // CHANGE 2: Sync map marker visibility with filter results
+  const filteredIds = new Set(filteredCatches.map(c => c.id));
+  allCatches.forEach(c => {
+    const marker = markers[c.id];
+    if (!marker) return;
+    if (filteredIds.has(c.id)) {
+      if (!map.hasLayer(marker)) map.addLayer(marker);
+    } else {
+      if (map.hasLayer(marker)) map.removeLayer(marker);
+    }
+  });
+
+  // CHANGE 3: Clear button always visible — no display toggling needed
   if (listOpen) renderList(filteredCatches);
 }
 
@@ -859,7 +882,13 @@ function clearFilters() {
    "f-wind-min","f-wind-max","f-pres-min","f-pres-max"].forEach(id => document.getElementById(id).value = "");
   ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => document.getElementById(id).value = "");
   filteredCatches = [...allCatches];
-  document.getElementById("clear-filters-btn").style.display = "none";
+
+  // Restore all markers on the map
+  allCatches.forEach(c => {
+    const marker = markers[c.id];
+    if (marker && !map.hasLayer(marker)) map.addLayer(marker);
+  });
+
   if (listOpen) renderList(filteredCatches);
 }
 
