@@ -100,29 +100,13 @@
       color: var(--text-muted); font-family: 'Cabin', sans-serif; padding: 2px 6px;
     }
 
-    /* ── Filter bar (list view) ── */
-    #filter-bar {
+    /* ── List header bar ── */
+    #list-header-bar {
       background: var(--green-dark); color: var(--white);
-      padding: 0 12px; display: flex; align-items: center; gap: 8px;
+      padding: 0 12px; display: flex; align-items: center;
       height: 40px; flex-shrink: 0;
     }
-    #filter-bar span { font-size: 13px; font-weight: 600; flex: 1; }
-    #filter-toggle-btn {
-      background: none; border: 1px solid rgba(255,255,255,0.3);
-      color: var(--white); padding: 4px 10px; border-radius: var(--radius);
-      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
-    }
-    #clear-filters-btn {
-      background: none; border: 1px solid rgba(255,255,255,0.3);
-      color: #f9c74f; padding: 4px 10px; border-radius: var(--radius);
-      font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
-    }
-
-    #filter-panel {
-      background: var(--white); border-bottom: 1px solid var(--tan-dark);
-      padding: 10px 12px; display: none; overflow-y: auto; max-height: 45vh; flex-shrink: 0;
-    }
-    #filter-panel.open { display: block; }
+    #list-header-bar span { font-size: 13px; font-weight: 600; flex: 1; }
 
     /* ── Shared filter grid styles ── */
     .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -482,18 +466,9 @@
 
   <!-- LIST PANE -->
   <div id="list-pane" class="hidden">
-    <div id="filter-bar">
+    <div id="list-header-bar">
       <span id="list-count-bar">Catches</span>
-      <button id="clear-filters-btn" onclick="clearFilters()">✕ Clear</button>
-      <button id="filter-toggle-btn" onclick="toggleFilters()">▼ Filters</button>
     </div>
-
-    <div id="filter-panel">
-      <div class="filter-grid" id="list-filter-grid">
-        <!-- Filters rendered here by JS -->
-      </div>
-    </div>
-
     <div id="catches-list-wrap">
       <div id="catches-list"></div>
     </div>
@@ -677,16 +652,28 @@ function saveUsername() {
 
 // ── Moon / Season ─────────────────────────────────────────────────────────────
 function getMoonPhase(date) {
-  const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
-  let y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
-  if (m < 3) { y--; m += 12; }
-  m++;
-  let jd = 365.25 * y + 30.6 * m + d - 694039.09;
-  jd /= 29.5305882;
-  jd -= Math.floor(jd);
-  let b = Math.round(jd * 8);
-  if (b >= 8) b = 0;
-  return phases[b];
+  // Known new moon reference: Jan 6, 2000 at 18:14 UTC
+  const KNOWN_NEW_MOON = new Date(Date.UTC(2000, 0, 6, 18, 14));
+  const LUNAR_CYCLE = 29.530588853; // days
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysSince = (date.getTime() - KNOWN_NEW_MOON.getTime()) / msPerDay;
+  // Normalise to 0–1 within the current cycle
+  let phase = ((daysSince % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE / LUNAR_CYCLE;
+  const phases = [
+    "New Moon",        // 0.00–0.06
+    "Waxing Crescent", // 0.06–0.25
+    "First Quarter",   // 0.25–0.31
+    "Waxing Gibbous",  // 0.31–0.50
+    "Full Moon",       // 0.50–0.56
+    "Waning Gibbous",  // 0.56–0.75
+    "Last Quarter",    // 0.75–0.81
+    "Waning Crescent"  // 0.81–1.00
+  ];
+  const boundaries = [0.06, 0.25, 0.31, 0.50, 0.56, 0.75, 0.81, 1.00];
+  for (let i = 0; i < boundaries.length; i++) {
+    if (phase < boundaries[i]) return phases[i];
+  }
+  return "New Moon";
 }
 
 function getSeason(date) {
@@ -709,10 +696,9 @@ function updateAutoFields(date) {
   document.getElementById("season").value = getSeason(date);
 }
 
-// FIX #4: Parse date string correctly so moon/season auto-calc from date input
+// Calculate moon/season immediately when date changes — no save needed
 document.getElementById("catchDate").addEventListener("change", function () {
   if (this.value) {
-    // Parse as local date by appending noon time (avoids UTC offset issues)
     const date = new Date(this.value + "T12:00:00");
     updateAutoFields(date);
   }
@@ -907,22 +893,89 @@ function editCatch(id) {
 }
 
 // ── Popup ─────────────────────────────────────────────────────────────────────
+const ND = '<span style="color:#c0392b;font-weight:600;font-size:11px;">No Data</span>';
+
+function nd(val, suffix) {
+  if (val == null || val === "" || val === undefined) return ND;
+  return suffix ? val + suffix : val;
+}
+
 function buildPopup(c) {
-  const id = "mi-" + c.id;
-  const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") || "—";
+  const infoId = "mi-" + c.id;
+  const wind = (c.wind_speed != null || c.wind_direction)
+    ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ")
+    : null;
+
   return `
-    <b>${c.species}</b><br>
-    <span style="font-size:12px;">📍 ${c.water_body || "—"} | 👤 ${c.username}</span><br>
-    <span style="font-size:12px;">📅 ${c.catch_date || "—"} ${c.catch_time ? c.catch_time.slice(0,5) : ""}</span><br>
-    <button class="popup-button" onclick="toggleMoreInfo(this,'${id}')">More Info</button>
-    <div id="${id}" class="more-info">
-      Size: ${c.size_in != null ? c.size_in + " in" : "—"} &nbsp; Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}<br>
-      Bait: ${c.bait || "—"} &nbsp; Rig: ${c.rig || "—"}<br>
-      Retrieve: ${c.retrieve || "—"} &nbsp; Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}<br>
-      Water Temp: ${c.water_temp_f != null ? c.water_temp_f + "°F" : "—"} &nbsp; Air: ${c.air_temp_f != null ? c.air_temp_f + "°F" : "—"}<br>
-      Weather: ${c.weather || "—"} &nbsp; Wind: ${wind}<br>
-      Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"} &nbsp; Moon: ${c.moon_phase || "—"}<br>
-      Season: ${c.season || "—"}
+    <div style="font-family:'Cabin',sans-serif;min-width:220px;">
+      <div style="font-size:15px;font-weight:700;color:#1a3a1f;margin-bottom:3px;">${c.species}</div>
+      <div style="font-size:12px;color:#5a6b5c;margin-bottom:1px;">📍 ${c.water_body || ND} &nbsp;|&nbsp; 👤 ${c.username}</div>
+      <div style="font-size:12px;color:#5a6b5c;margin-bottom:8px;">📅 ${c.catch_date || ND}${c.catch_time ? " " + c.catch_time.slice(0,5) : ""}</div>
+
+      <div style="display:flex;gap:5px;margin-bottom:6px;">
+        <button class="popup-button" onclick="toggleMoreInfo(this,'${infoId}')" style="flex:1;">More Info</button>
+        <button class="popup-button" onclick="editCatch('${c.id}')" style="background:#d0e8f5;color:#2a5f8f;border-color:#a8d4ee;">✏️ Edit</button>
+        <button class="popup-button" onclick="deleteCatch('${c.id}')" style="background:#fde8e8;color:#c0392b;border-color:#f5b8b8;">🗑 Delete</button>
+      </div>
+
+      <div id="${infoId}" class="more-info">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <tr style="border-bottom:1px solid #e0d4b8;">
+            <td colspan="2" style="padding:4px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Catch Details</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Size</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.size_in, " in")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weight</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.weight_lbs, " lbs")}</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Depth</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.depth_ft, " ft")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Water Temp</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.water_temp_f, "°F")}</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Bait</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.bait)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Rig</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.rig)}</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Retrieve</td>
+            <td colspan="3" style="padding:3px 0;font-weight:600;">${nd(c.retrieve)}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0d4b8;">
+            <td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Conditions</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Air Temp</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.air_temp_f, "°F")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weather</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.weather)}</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Wind</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(wind)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Pressure</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.pressure_inhg, " inHg")}</td>
+          </tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Moon</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.moon_phase)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Season</td>
+            <td style="padding:3px 0;font-weight:600;">${nd(c.season)}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e0d4b8;">
+            <td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Location</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="padding:3px 0;font-weight:600;font-size:11px;">
+              ${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)}
+            </td>
+          </tr>
+        </table>
+      </div>
     </div>`;
 }
 
@@ -965,7 +1018,11 @@ function renderList(catches) {
   }
 
   catches.forEach(c => {
-    const wind = [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") || "—";
+    const wind = (c.wind_speed != null || c.wind_direction)
+      ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ")
+      : null;
+    const noData = '<span style="color:#c0392b;font-weight:600;font-size:11px;">No Data</span>';
+    const nd = (v, suffix) => (v == null || v === "") ? noData : (suffix ? v + suffix : v);
     const card = document.createElement("div");
     card.className = "catch-card";
     card.innerHTML = `
@@ -982,20 +1039,20 @@ function renderList(catches) {
       <div class="card-detail" id="cd-${c.id}">
         <div class="detail-grid">
           <div class="detail-section">Catch Details</div>
-          <div>Size: ${c.size_in != null ? c.size_in + " in" : "—"}</div>
-          <div>Weight: ${c.weight_lbs != null ? c.weight_lbs + " lbs" : "—"}</div>
-          <div>Bait: ${c.bait || "—"}</div>
-          <div>Rig: ${c.rig || "—"}</div>
-          <div>Retrieve: ${c.retrieve || "—"}</div>
-          <div>Water Temp: ${c.water_temp_f != null ? c.water_temp_f + "°F" : "—"}</div>
-          <div>Depth: ${c.depth_ft != null ? c.depth_ft + " ft" : "—"}</div>
+          <div>Size: ${nd(c.size_in, " in")}</div>
+          <div>Weight: ${nd(c.weight_lbs, " lbs")}</div>
+          <div>Bait: ${nd(c.bait)}</div>
+          <div>Rig: ${nd(c.rig)}</div>
+          <div>Retrieve: ${nd(c.retrieve)}</div>
+          <div>Water Temp: ${nd(c.water_temp_f, "°F")}</div>
+          <div>Depth: ${nd(c.depth_ft, " ft")}</div>
           <div class="detail-section">Conditions</div>
-          <div>Air Temp: ${c.air_temp_f != null ? c.air_temp_f + "°F" : "—"}</div>
-          <div>Weather: ${c.weather || "—"}</div>
-          <div>Wind: ${wind}</div>
-          <div>Pressure: ${c.pressure_inhg != null ? c.pressure_inhg + " inHg" : "—"}</div>
-          <div>Moon: ${c.moon_phase || "—"}</div>
-          <div>Season: ${c.season || "—"}</div>
+          <div>Air Temp: ${nd(c.air_temp_f, "°F")}</div>
+          <div>Weather: ${nd(c.weather)}</div>
+          <div>Wind: ${nd(wind)}</div>
+          <div>Pressure: ${nd(c.pressure_inhg, " inHg")}</div>
+          <div>Moon: ${nd(c.moon_phase)}</div>
+          <div>Season: ${nd(c.season)}</div>
           <div class="detail-section">Location</div>
           <div style="grid-column:1/-1">Lat ${parseFloat(c.lat).toFixed(5)}, Lng ${parseFloat(c.lng).toFixed(5)}</div>
         </div>
@@ -1129,7 +1186,7 @@ function buildFilterHTML() {
     </div>`;
 }
 
-// Filter values stored in a plain object — both panels read/write this
+// Filter values stored in a plain object
 let filterState = {};
 
 function getFilterState() {
@@ -1152,74 +1209,22 @@ function getFilterState() {
 
 function countActiveFilters(fs) {
   let count = 0;
-  const checks = [fs.water, fs.species, fs.user, fs.season, fs.weather, fs.windDir,
-    fs.moon, fs.bait, fs.rig, fs.retrieve, fs.dateFrom, fs.dateTo];
-  checks.forEach(v => { if (v) count++; });
-  const nums = [fs.sizeMin, fs.sizeMax, fs.wtMin, fs.wtMax, fs.depMin, fs.depMax,
-    fs.wtempMin, fs.wtempMax, fs.atempMin, fs.atempMax, fs.windMin, fs.windMax, fs.presMin, fs.presMax];
-  nums.forEach(v => { if (v !== null) count++; });
+  [fs.water, fs.species, fs.user, fs.season, fs.weather, fs.windDir,
+   fs.moon, fs.bait, fs.rig, fs.retrieve, fs.dateFrom, fs.dateTo].forEach(v => { if (v) count++; });
+  [fs.sizeMin, fs.sizeMax, fs.wtMin, fs.wtMax, fs.depMin, fs.depMax,
+   fs.wtempMin, fs.wtempMax, fs.atempMin, fs.atempMax, fs.windMin, fs.windMax, fs.presMin, fs.presMax
+  ].forEach(v => { if (v !== null) count++; });
   return count;
-}
-
-function syncFilterGrids() {
-  // After the map panel is the source of truth, mirror values to list panel
-  const mapGrid = document.getElementById("shared-filter-grid");
-  const listGrid = document.getElementById("list-filter-grid");
-  if (!mapGrid || !listGrid) return;
-
-  // Copy current map grid HTML to list grid, but change IDs to avoid duplicates
-  // Instead, we keep ONLY the map grid as the real inputs, and render read-only display in list
-  // Actually simplest: render the same HTML in both, use filterState object as source of truth
-}
-
-// ── Init filter grids ─────────────────────────────────────────────────────────
-function initFilters() {
-  // Map panel gets the real interactive filter inputs
-  document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML();
-
-  // List panel gets a duplicate set with different IDs prefixed with "l-"
-  // But to keep things simple and DRY, the list panel just shows the same grid
-  // synced via filterState. We render a second copy with "l-" prefix IDs.
-  const listHTML = buildFilterHTML()
-    .replace(/id="f-/g, 'id="l-f-')
-    .replace(/id="f-/g, 'id="l-f-')  // in case of double pass
-    .replace(/oninput="applyFilters\(\)"/g, 'oninput="syncFromList(this);applyFilters()"')
-    .replace(/onchange="applyFilters\(\)"/g, 'onchange="syncFromList(this);applyFilters()"');
-  document.getElementById("list-filter-grid").innerHTML = listHTML;
-}
-
-function syncFromList(changedEl) {
-  // When list panel changes a filter, mirror it to the map panel
-  const lid = changedEl.id; // e.g. "l-f-water"
-  const mid = lid.replace(/^l-/, ""); // "f-water"
-  const mapEl = document.getElementById(mid);
-  if (mapEl) mapEl.value = changedEl.value;
-}
-
-function syncListFromMap() {
-  // Mirror map panel values to list panel after programmatic changes (clear)
-  const ids = ["f-water","f-species","f-user","f-season","f-weather","f-wind-dir","f-moon",
-    "f-bait","f-rig","f-retrieve","f-date-from","f-date-to","f-size-min","f-size-max",
-    "f-wt-min","f-wt-max","f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max",
-    "f-atemp-min","f-atemp-max","f-wind-min","f-wind-max","f-pres-min","f-pres-max"];
-  ids.forEach(id => {
-    const mapEl = document.getElementById(id);
-    const listEl = document.getElementById("l-" + id);
-    if (mapEl && listEl) listEl.value = mapEl.value;
-  });
 }
 
 // ── Map filter panel toggle ───────────────────────────────────────────────────
 function toggleMapFilterPanel() {
-  const panel = document.getElementById("map-filter-panel");
-  panel.classList.toggle("open");
+  document.getElementById("map-filter-panel").classList.toggle("open");
 }
 
-// ── Filters ───────────────────────────────────────────────────────────────────
-function toggleFilters() {
-  const panel = document.getElementById("filter-panel");
-  panel.classList.toggle("open");
-  document.getElementById("filter-toggle-btn").textContent = panel.classList.contains("open") ? "▲ Filters" : "▼ Filters";
+// ── Init filter grid (map panel only) ────────────────────────────────────────
+function initFilters() {
+  document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML();
 }
 
 function applyFilters() {
@@ -1287,7 +1292,6 @@ function applyFilters() {
   }
 
   if (listOpen) renderList(filteredCatches);
-  syncListFromMap();
 }
 
 function clearFilters() {
@@ -1315,7 +1319,6 @@ function clearFilters() {
   document.getElementById("filter-badge").classList.remove("visible");
   document.getElementById("map-filter-btn").classList.remove("has-filters");
 
-  syncListFromMap();
   if (listOpen) renderList(filteredCatches);
 }
 
