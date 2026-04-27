@@ -16,6 +16,8 @@
       --green-pale: #d4ead7;
       --water: #2a5f8f;
       --water-light: #d0e8f5;
+      --auto-bg: #e8f4fc;
+      --auto-border: #a8d4ee;
       --tan: #f2ead8;
       --tan-dark: #e0d4b8;
       --text: #1c2b1e;
@@ -65,7 +67,40 @@
     }
     #list-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
 
-    /* ── Filter bar ── */
+    /* ── Floating map filter button ── */
+    #map-filter-btn {
+      position: absolute; top: 12px; right: 12px; z-index: 1000;
+      background: var(--white); color: var(--green-dark); border: 2px solid var(--green-mid);
+      padding: 7px 13px; border-radius: var(--radius); font-family: 'Cabin', sans-serif;
+      font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow);
+      transition: background 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #map-filter-btn:hover { background: var(--green-mid); color: var(--white); }
+    #map-filter-btn.has-filters { background: var(--water); color: var(--white); border-color: var(--water); }
+
+    /* ── Floating filter panel (map view) ── */
+    #map-filter-panel {
+      position: absolute; top: 50px; right: 12px; z-index: 1000;
+      background: var(--white); border: 1px solid var(--tan-dark);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      width: 340px; max-height: calc(100vh - 120px);
+      overflow-y: auto; display: none; padding: 10px 12px;
+    }
+    #map-filter-panel.open { display: block; }
+    #map-filter-panel .panel-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--tan-dark);
+    }
+    #map-filter-panel .panel-header span {
+      font-size: 13px; font-weight: 600; color: var(--green-dark);
+    }
+    #map-filter-panel .panel-header button {
+      background: none; border: none; font-size: 12px; cursor: pointer;
+      color: var(--text-muted); font-family: 'Cabin', sans-serif; padding: 2px 6px;
+    }
+
+    /* ── Filter bar (list view) ── */
     #filter-bar {
       background: var(--green-dark); color: var(--white);
       padding: 0 12px; display: flex; align-items: center; gap: 8px;
@@ -77,7 +112,6 @@
       color: var(--white); padding: 4px 10px; border-radius: var(--radius);
       font-size: 12px; cursor: pointer; font-family: 'Cabin', sans-serif;
     }
-    /* CHANGE 3: Clear button always visible */
     #clear-filters-btn {
       background: none; border: 1px solid rgba(255,255,255,0.3);
       color: #f9c74f; padding: 4px 10px; border-radius: var(--radius);
@@ -90,6 +124,7 @@
     }
     #filter-panel.open { display: block; }
 
+    /* ── Shared filter grid styles ── */
     .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .filter-grid input, .filter-grid select {
       width: 100%; padding: 5px 7px; font-size: 12px; font-family: 'Cabin', sans-serif;
@@ -99,6 +134,13 @@
     .filter-field { display: flex; flex-direction: column; }
     .filter-range { display: flex; gap: 4px; }
     .filter-range input { flex: 1; }
+
+    /* ── Active filter badge on map button ── */
+    .filter-count-badge {
+      background: #f9c74f; color: var(--green-dark); border-radius: 10px;
+      padding: 1px 6px; font-size: 11px; font-weight: 700; display: none;
+    }
+    .filter-count-badge.visible { display: inline; }
 
     /* ── Catches list ── */
     #catches-list-wrap { flex: 1; overflow-y: auto; padding: 8px; }
@@ -140,32 +182,61 @@
     /* ── Catch Form ── */
     .form-popup {
       position: absolute; top: 10px; left: 10px;
-      background: var(--white); padding: 12px; border-radius: var(--radius);
-      box-shadow: var(--shadow); width: 280px; max-height: 92vh;
+      background: var(--white); padding: 14px; border-radius: var(--radius);
+      box-shadow: var(--shadow); width: 290px; max-height: 92vh;
       overflow-y: auto; display: none; z-index: 1000;
     }
-    .form-popup h4 { font-family: 'Cabin Condensed', sans-serif; font-size: 16px; color: var(--green-dark); margin-bottom: 8px; }
+    .form-popup h4 { font-family: 'Cabin Condensed', sans-serif; font-size: 16px; color: var(--green-dark); margin-bottom: 10px; }
 
+    /* ── Form sections ── */
     .section-label {
       font-size: 10px; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px;
-      margin: 10px 0 4px; border-bottom: 1px solid var(--tan-dark); padding-bottom: 2px;
+      margin: 12px 0 6px; border-bottom: 1px solid var(--tan-dark); padding-bottom: 3px;
+    }
+
+    /* ── Labeled field wrapper ── */
+    .field-wrap {
+      display: flex; flex-direction: column; margin-bottom: 7px;
+    }
+    .field-wrap .field-label {
+      font-size: 11px; font-weight: 600; color: var(--text-muted);
+      margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    /* User input fields — white background */
+    .field-wrap.user-field input,
+    .field-wrap.user-field select {
+      background: var(--white);
+    }
+    /* Auto-calculated fields — light blue background */
+    .field-wrap.auto-field input,
+    .field-wrap.auto-field select {
+      background: var(--auto-bg);
+      border-color: var(--auto-border);
+      color: #2a5f8f;
     }
 
     .form-popup input, .form-popup select {
-      width: 100%; margin-bottom: 5px; padding: 7px 6px; font-size: 13px;
-      font-family: 'Cabin', sans-serif; border: 1px solid #ccc; border-radius: 4px; color: var(--text);
+      width: 100%; padding: 7px 8px; font-size: 13px;
+      font-family: 'Cabin', sans-serif; border: 1px solid #ccc;
+      border-radius: 4px; color: var(--text);
     }
-    .form-popup input[readonly] { background: #f5f5f5; color: #777; }
+    .form-popup input[readonly] {
+      background: var(--auto-bg) !important;
+      border-color: var(--auto-border) !important;
+      color: #2a5f8f !important;
+      cursor: default;
+    }
 
-    .species-row { display: flex; gap: 4px; margin-bottom: 5px; }
-    .species-row select { flex: 1; margin-bottom: 0; }
+    .species-row { display: flex; gap: 4px; }
+    .species-row select { flex: 1; }
     .species-row button {
-      padding: 6px 8px; font-size: 12px; background: #eee; border: 1px solid #ccc;
+      padding: 7px 8px; font-size: 12px; background: #eee; border: 1px solid #ccc;
       border-radius: 4px; cursor: pointer; white-space: nowrap; font-family: 'Cabin', sans-serif;
+      flex-shrink: 0;
     }
 
-    .btn-row { display: flex; gap: 6px; margin-top: 10px; }
+    .btn-row { display: flex; gap: 6px; margin-top: 12px; }
     .btn-row button {
       flex: 1; padding: 8px; font-size: 13px; font-family: 'Cabin', sans-serif;
       font-weight: 600; border: none; border-radius: 4px; cursor: pointer;
@@ -174,7 +245,42 @@
     .btn-save:hover { background: var(--green-dark); }
     .btn-save:disabled { background: #aaa; cursor: not-allowed; }
     .btn-cancel { background: var(--tan-dark); color: var(--text); }
-    .status-msg { font-size: 12px; color: var(--text-muted); text-align: center; min-height: 16px; margin-top: 4px; }
+
+    /* ── Auto-fill status box ── */
+    #autofill-status {
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 6px;
+      display: none;
+      border: 1.5px solid transparent;
+    }
+    #autofill-status.loading {
+      display: block;
+      background: #fff9e6;
+      border-color: #f9c74f;
+      color: #8a6800;
+    }
+    #autofill-status.success {
+      display: block;
+      background: #e8f7ec;
+      border-color: #4a9455;
+      color: #1a5c27;
+    }
+    #autofill-status.partial {
+      display: block;
+      background: #fff3e0;
+      border-color: #e8924a;
+      color: #7a3d00;
+    }
+    #autofill-status.error {
+      display: block;
+      background: #fde8e8;
+      border-color: #c0392b;
+      color: #7a1010;
+    }
 
     /* ── Username popup ── */
     .username-popup {
@@ -202,6 +308,9 @@
     .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.9; }
     .more-info.open { display: block; }
 
+    /* ── Greyed-out map markers ── */
+    .marker-greyed { filter: grayscale(100%) opacity(0.4); }
+
     /* ── Mobile ── */
     @media (max-width: 700px) {
       #list-pane {
@@ -211,6 +320,7 @@
       #list-pane.mobile-open { display: flex; }
       #map-pane.mobile-hidden { display: none; }
       .form-popup { width: calc(100vw - 20px); max-width: 340px; }
+      #map-filter-panel { width: calc(100vw - 24px); right: 12px; }
     }
   </style>
 </head>
@@ -226,7 +336,6 @@
 </div>
 
 <div id="header">
-  <!-- CHANGE 4: Title updated to FinSight -->
   <span id="header-title">🎣 FinSight</span>
   <div id="header-right">
     <span id="username-display"></span>
@@ -238,54 +347,132 @@
   <div id="map-pane">
     <div id="map"></div>
 
+    <!-- Floating filter button on map -->
+    <button id="map-filter-btn" onclick="toggleMapFilterPanel()">
+      🔍 Filters <span class="filter-count-badge" id="filter-badge"></span>
+    </button>
+
+    <!-- Floating filter panel on map -->
+    <div id="map-filter-panel">
+      <div class="panel-header">
+        <span>Filter Catches</span>
+        <button onclick="clearFilters()">✕ Clear All</button>
+      </div>
+      <div class="filter-grid" id="shared-filter-grid">
+        <!-- Filters rendered here by JS, shared with list panel -->
+      </div>
+    </div>
+
+    <!-- Catch Form -->
     <div id="catchForm" class="form-popup">
       <h4 id="form-title">🎣 Log Catch</h4>
 
+      <!-- Auto-fill status box -->
+      <div id="autofill-status"></div>
+
       <div class="section-label">Required</div>
-      <input type="text" id="waterBody" placeholder="Body of Water" />
-      <div class="species-row">
-        <select id="species"></select>
-        <button onclick="addSpecies()">+ New</button>
+
+      <div class="field-wrap user-field">
+        <span class="field-label">Body of Water</span>
+        <input type="text" id="waterBody" placeholder="e.g. Lake Coeur d'Alene" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Species</span>
+        <div class="species-row">
+          <select id="species"></select>
+          <button onclick="addSpecies()">+ New</button>
+        </div>
       </div>
 
       <div class="section-label">Date &amp; Time</div>
-      <input type="date" id="catchDate" />
-      <input type="time" id="catchTime" />
+
+      <div class="field-wrap user-field">
+        <span class="field-label">Date</span>
+        <input type="date" id="catchDate" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Time</span>
+        <input type="time" id="catchTime" />
+      </div>
 
       <div class="section-label">Catch Details</div>
-      <input type="number" id="size" placeholder="Size (inches)" />
-      <input type="number" id="weight" placeholder="Weight (lbs)" step="0.1" />
-      <input type="text" id="bait" placeholder="Bait / Lure" />
-      <input type="text" id="rig" placeholder="Rig Type" />
-      <input type="text" id="retrieve" placeholder="Retrieve Style" />
-      <input type="number" id="depth" placeholder="Depth Fished (ft)" />
-      <input type="number" id="waterTemp" placeholder="Water Temp (°F)" />
+
+      <div class="field-wrap user-field">
+        <span class="field-label">Size (inches)</span>
+        <input type="number" id="size" placeholder="e.g. 14" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Weight (lbs)</span>
+        <input type="number" id="weight" placeholder="e.g. 2.5" step="0.1" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Bait / Lure</span>
+        <input type="text" id="bait" placeholder="e.g. Rapala Shad Rap" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Rig Type</span>
+        <input type="text" id="rig" placeholder="e.g. Drop Shot" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Retrieve Style</span>
+        <input type="text" id="retrieve" placeholder="e.g. Slow roll" />
+      </div>
+      <div class="field-wrap user-field">
+        <span class="field-label">Depth Fished (ft)</span>
+        <input type="number" id="depth" placeholder="e.g. 12" />
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Water Temp (°F) — Auto-filled via USGS</span>
+        <input type="number" id="waterTemp" placeholder="Auto-filled or enter manually" />
+      </div>
 
       <div class="section-label">Conditions</div>
-      <input type="number" id="airTemp" placeholder="Air Temp (°F)" />
-      <select id="weatherCondition">
-        <option value="">-- Weather --</option>
-        <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
-        <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
-        <option>Snow</option><option>Thunderstorm</option>
-      </select>
-      <input type="number" id="windSpeed" placeholder="Wind Speed (mph)" />
-      <select id="windDirection">
-        <option value="">-- Wind Direction --</option>
-        <option>N</option><option>NE</option><option>E</option><option>SE</option>
-        <option>S</option><option>SW</option><option>W</option><option>NW</option>
-        <option>Calm</option>
-      </select>
-      <input type="number" id="pressure" placeholder="Barometric Pressure (inHg)" step="0.01" />
+
+      <div class="field-wrap auto-field">
+        <span class="field-label">Air Temp (°F) — Auto-filled</span>
+        <input type="number" id="airTemp" placeholder="Auto-filled or enter manually" />
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Weather — Auto-filled</span>
+        <select id="weatherCondition">
+          <option value="">-- Weather --</option>
+          <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
+          <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
+          <option>Snow</option><option>Thunderstorm</option>
+        </select>
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Wind Speed (mph) — Auto-filled</span>
+        <input type="number" id="windSpeed" placeholder="Auto-filled or enter manually" />
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Wind Direction — Auto-filled</span>
+        <select id="windDirection">
+          <option value="">-- Wind Direction --</option>
+          <option>N</option><option>NE</option><option>E</option><option>SE</option>
+          <option>S</option><option>SW</option><option>W</option><option>NW</option>
+          <option>Calm</option>
+        </select>
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Barometric Pressure (inHg) — Auto-filled</span>
+        <input type="number" id="pressure" placeholder="Auto-filled or enter manually" step="0.01" />
+      </div>
 
       <div class="section-label">Auto-Calculated</div>
-      <input type="text" id="moonPhase" placeholder="Moon Phase" readonly />
-      <select id="season">
-        <option value="">-- Season --</option>
-        <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
-      </select>
 
-      <div class="status-msg" id="statusMsg"></div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Moon Phase — Auto-calculated from date</span>
+        <input type="text" id="moonPhase" placeholder="Set date above to calculate" readonly />
+      </div>
+      <div class="field-wrap auto-field">
+        <span class="field-label">Season — Auto-calculated from date</span>
+        <select id="season">
+          <option value="">-- Auto-calculated --</option>
+          <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
+        </select>
+      </div>
+
       <div class="btn-row">
         <button class="btn-save" id="saveBtn" onclick="saveCatch()">Save Catch</button>
         <button class="btn-cancel" onclick="closeForm()">Cancel</button>
@@ -297,126 +484,13 @@
   <div id="list-pane" class="hidden">
     <div id="filter-bar">
       <span id="list-count-bar">Catches</span>
-      <!-- CHANGE 3: Clear button always shown (removed display:none) -->
       <button id="clear-filters-btn" onclick="clearFilters()">✕ Clear</button>
       <button id="filter-toggle-btn" onclick="toggleFilters()">▼ Filters</button>
     </div>
 
     <div id="filter-panel">
-      <div class="filter-grid">
-        <div class="filter-field">
-          <div class="filter-label">Water Body</div>
-          <input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Species</div>
-          <input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Username</div>
-          <input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Season</div>
-          <select id="f-season" onchange="applyFilters()">
-            <option value="">Any</option>
-            <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
-          </select>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Weather</div>
-          <select id="f-weather" onchange="applyFilters()">
-            <option value="">Any</option>
-            <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
-            <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
-            <option>Snow</option><option>Thunderstorm</option>
-          </select>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Wind Direction</div>
-          <select id="f-wind-dir" onchange="applyFilters()">
-            <option value="">Any</option>
-            <option>N</option><option>NE</option><option>E</option><option>SE</option>
-            <option>S</option><option>SW</option><option>W</option><option>NW</option><option>Calm</option>
-          </select>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Moon Phase</div>
-          <select id="f-moon" onchange="applyFilters()">
-            <option value="">Any</option>
-            <option>New Moon</option><option>Waxing Crescent</option><option>First Quarter</option>
-            <option>Waxing Gibbous</option><option>Full Moon</option><option>Waning Gibbous</option>
-            <option>Last Quarter</option><option>Waning Crescent</option>
-          </select>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Bait / Lure</div>
-          <input type="text" id="f-bait" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Rig</div>
-          <input type="text" id="f-rig" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Retrieve</div>
-          <input type="text" id="f-retrieve" placeholder="Any" oninput="applyFilters()" />
-        </div>
-        <div class="filter-field" style="grid-column:1/-1">
-          <div class="filter-label">Date Range</div>
-          <div class="filter-range">
-            <input type="date" id="f-date-from" onchange="applyFilters()" />
-            <input type="date" id="f-date-to" onchange="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Size (in)</div>
-          <div class="filter-range">
-            <input type="number" id="f-size-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-size-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Weight (lbs)</div>
-          <div class="filter-range">
-            <input type="number" id="f-wt-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-wt-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Depth (ft)</div>
-          <div class="filter-range">
-            <input type="number" id="f-depth-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-depth-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Water Temp (°F)</div>
-          <div class="filter-range">
-            <input type="number" id="f-wtemp-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-wtemp-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Air Temp (°F)</div>
-          <div class="filter-range">
-            <input type="number" id="f-atemp-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-atemp-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Wind Speed (mph)</div>
-          <div class="filter-range">
-            <input type="number" id="f-wind-min" placeholder="Min" oninput="applyFilters()" />
-            <input type="number" id="f-wind-max" placeholder="Max" oninput="applyFilters()" />
-          </div>
-        </div>
-        <div class="filter-field">
-          <div class="filter-label">Pressure (inHg)</div>
-          <div class="filter-range">
-            <input type="number" id="f-pres-min" placeholder="Min" oninput="applyFilters()" step="0.01" />
-            <input type="number" id="f-pres-max" placeholder="Max" oninput="applyFilters()" step="0.01" />
-          </div>
-        </div>
+      <div class="filter-grid" id="list-filter-grid">
+        <!-- Filters rendered here by JS -->
       </div>
     </div>
 
@@ -449,45 +523,30 @@ async function dbFetch(path, method = "GET", body = null) {
   return res.json().catch(() => null);
 }
 
-// ── Weather auto-fill (via Supabase Edge Function proxy — key is server-side) ──
+// ── Weather auto-fill ─────────────────────────────────────────────────────────
 async function fetchWeather(lat, lng) {
   const EDGE_URL = "https://jtyporonxtgclzvkuttt.supabase.co/functions/v1/get-weather";
-  let res;
-  try {
-    res = await fetch(EDGE_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY
-      },
-      body: JSON.stringify({ lat, lng })
-    });
-  } catch (networkErr) {
-    throw new Error("Network error reaching weather proxy: " + networkErr.message);
-  }
+  const res = await fetch(EDGE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
+    },
+    body: JSON.stringify({ lat, lng })
+  });
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Weather proxy ${res.status}: ${body}`);
   }
   const d = await res.json();
-  console.log("OWM response (via proxy):", d);
-
-  if (d.main?.temp != null)
-    document.getElementById("airTemp").value = Math.round(d.main.temp);
-
-  if (d.main?.pressure != null)
-    document.getElementById("pressure").value = (d.main.pressure * 0.02953).toFixed(2);
-
-  if (d.wind?.speed != null)
-    document.getElementById("windSpeed").value = Math.round(d.wind.speed);
-
+  if (d.main?.temp != null) document.getElementById("airTemp").value = Math.round(d.main.temp);
+  if (d.main?.pressure != null) document.getElementById("pressure").value = (d.main.pressure * 0.02953).toFixed(2);
+  if (d.wind?.speed != null) document.getElementById("windSpeed").value = Math.round(d.wind.speed);
   if (d.wind?.deg != null) {
     const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
-    const idx = Math.round(d.wind.deg / 45) % 8;
-    document.getElementById("windDirection").value = dirs[idx];
+    document.getElementById("windDirection").value = dirs[Math.round(d.wind.deg / 45) % 8];
   }
-
   const wid = d.weather?.[0]?.id;
   let condition = "";
   if (wid != null) {
@@ -506,35 +565,20 @@ async function fetchWeather(lat, lng) {
 
 // ── Water temp auto-fill (USGS) ───────────────────────────────────────────────
 async function fetchUSGSWaterTemp(lat, lng) {
-  // Use a bounding box of ~0.3 degrees (~20 miles) around the pin
   const delta = 0.3;
-  const minLng = (lng - delta).toFixed(6);
-  const minLat = (lat - delta).toFixed(6);
-  const maxLng = (lng + delta).toFixed(6);
-  const maxLat = (lat + delta).toFixed(6);
-  const bBox = `${minLng},${minLat},${maxLng},${maxLat}`;
+  const bBox = `${(lng-delta).toFixed(6)},${(lat-delta).toFixed(6)},${(lng+delta).toFixed(6)},${(lat+delta).toFixed(6)}`;
   const url = `https://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${bBox}&parameterCd=00010&siteStatus=active&siteType=ST,LK`;
-
-  let res;
-  try {
-    res = await fetch(url);
-  } catch (networkErr) {
-    throw new Error("Network error reaching USGS: " + networkErr.message);
-  }
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`USGS ${res.status}`);
   const data = await res.json();
-  console.log("USGS response:", data);
-
   const series = data?.value?.timeSeries;
   if (!series || series.length === 0) return null;
-
   for (const ts of series) {
     const values = ts.values?.[0]?.value;
     if (!values || values.length === 0) continue;
     const latest = values[values.length - 1];
     const tempC = parseFloat(latest.value);
     if (isNaN(tempC) || latest.value === "-999999") continue;
-    // USGS water temp (parameterCd 00010) is in Celsius — convert to °F
     const tempF = Math.round(tempC * 9 / 5 + 32);
     const siteName = ts.sourceInfo?.siteName || "nearby USGS station";
     return { tempF, siteName };
@@ -542,51 +586,38 @@ async function fetchUSGSWaterTemp(lat, lng) {
   return null;
 }
 
-// ── Combined auto-fill on pin drop ────────────────────────────────────────────
+// ── Combined auto-fill ────────────────────────────────────────────────────────
 async function autoFillConditions(lat, lng) {
-  const statusMsg = document.getElementById("statusMsg");
-  statusMsg.textContent = "⏳ Fetching weather & water data…";
-  statusMsg.style.color = "var(--text-muted)";
+  const statusEl = document.getElementById("autofill-status");
+  statusEl.className = "loading";
+  statusEl.textContent = "⏳ Fetching weather & water data…";
 
-  let owmOk = false, usgsOk = false;
-
-  // Run both fetches in parallel
   const [owmResult, usgsResult] = await Promise.allSettled([
     fetchWeather(lat, lng),
     fetchUSGSWaterTemp(lat, lng)
   ]);
 
-  if (owmResult.status === "fulfilled") {
-    owmOk = true;
-  } else {
-    console.warn("OWM fetch failed:", owmResult.reason);
-  }
+  const owmOk = owmResult.status === "fulfilled";
+  let usgsOk = false;
 
   if (usgsResult.status === "fulfilled" && usgsResult.value) {
     const { tempF, siteName } = usgsResult.value;
-    const wtField = document.getElementById("waterTemp");
-    wtField.value = tempF;
-    wtField.placeholder = `Water Temp (°F) — USGS: ${siteName}`;
+    document.getElementById("waterTemp").value = tempF;
     usgsOk = true;
-  } else {
-    document.getElementById("waterTemp").placeholder = "Water Temp (°F) — no USGS station nearby, enter manually";
-    console.warn("USGS fetch failed or no data:", usgsResult.reason || "no nearby station");
   }
 
-  // Status summary
   if (owmOk && usgsOk) {
-    statusMsg.style.color = "var(--green-mid)";
-    statusMsg.textContent = "✅ Weather & water temp auto-filled — edit any field as needed";
+    statusEl.className = "success";
+    statusEl.textContent = "✅ Weather & water temp auto-filled — edit any field as needed";
   } else if (owmOk) {
-    statusMsg.style.color = "var(--green-mid)";
-    statusMsg.textContent = "✅ Weather auto-filled — no USGS water temp nearby, enter manually";
+    statusEl.className = "partial";
+    statusEl.textContent = "⚠️ Weather auto-filled — no USGS station nearby, enter water temp manually";
   } else if (usgsOk) {
-    statusMsg.style.color = "var(--green-mid)";
-    statusMsg.textContent = "✅ USGS water temp filled — weather fetch failed, enter manually";
+    statusEl.className = "partial";
+    statusEl.textContent = "⚠️ Water temp filled via USGS — weather fetch failed, enter conditions manually";
   } else {
-    statusMsg.style.color = "#c0392b";
-    const owmErr = owmResult.reason?.message || "unknown error";
-    statusMsg.textContent = `⚠️ Auto-fill failed (${owmErr}) — enter conditions manually`;
+    statusEl.className = "error";
+    statusEl.textContent = "❌ Auto-fill failed — please enter conditions manually";
   }
 }
 
@@ -647,30 +678,44 @@ function saveUsername() {
 // ── Moon / Season ─────────────────────────────────────────────────────────────
 function getMoonPhase(date) {
   const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
-  let y = date.getFullYear(), m = date.getMonth()+1, d = date.getDate();
-  if (m < 3) { y--; m += 12; } m++;
-  let jd = 365.25*y + 30.6*m + d - 694039.09;
-  jd /= 29.5305882; jd -= Math.floor(jd);
-  let b = Math.round(jd * 8); if (b >= 8) b = 0;
+  let y = date.getFullYear(), m = date.getMonth() + 1, d = date.getDate();
+  if (m < 3) { y--; m += 12; }
+  m++;
+  let jd = 365.25 * y + 30.6 * m + d - 694039.09;
+  jd /= 29.5305882;
+  jd -= Math.floor(jd);
+  let b = Math.round(jd * 8);
+  if (b >= 8) b = 0;
   return phases[b];
 }
+
 function getSeason(date) {
-  const m = date.getMonth()+1;
-  if (m>=3&&m<=5) return "Spring"; if (m>=6&&m<=8) return "Summer";
-  if (m>=9&&m<=11) return "Fall"; return "Winter";
+  const m = date.getMonth() + 1;
+  if (m >= 3 && m <= 5) return "Spring";
+  if (m >= 6 && m <= 8) return "Summer";
+  if (m >= 9 && m <= 11) return "Fall";
+  return "Winter";
 }
+
 function prefillDateTime() {
   const now = new Date();
   document.getElementById("catchDate").value = now.toISOString().split("T")[0];
-  document.getElementById("catchTime").value = now.toTimeString().slice(0,5);
+  document.getElementById("catchTime").value = now.toTimeString().slice(0, 5);
   updateAutoFields(now);
 }
+
 function updateAutoFields(date) {
   document.getElementById("moonPhase").value = getMoonPhase(date);
   document.getElementById("season").value = getSeason(date);
 }
-document.getElementById("catchDate").addEventListener("change", function() {
-  if (this.value) updateAutoFields(new Date(this.value + "T12:00:00"));
+
+// FIX #4: Parse date string correctly so moon/season auto-calc from date input
+document.getElementById("catchDate").addEventListener("change", function () {
+  if (this.value) {
+    // Parse as local date by appending noon time (avoids UTC offset issues)
+    const date = new Date(this.value + "T12:00:00");
+    updateAutoFields(date);
+  }
 });
 
 // ── Map ───────────────────────────────────────────────────────────────────────
@@ -679,11 +724,16 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
-// CHANGE 1: If list is open, close it instead of opening the catch form
-map.on("click", function(e) {
+map.on("click", function (e) {
   if (editingId) return;
 
-  // If list view is open, close it and do nothing else
+  // Close map filter panel if open
+  const mapPanel = document.getElementById("map-filter-panel");
+  if (mapPanel.classList.contains("open")) {
+    mapPanel.classList.remove("open");
+    return;
+  }
+
   if (listOpen) {
     toggleListView();
     return;
@@ -697,15 +747,18 @@ map.on("click", function(e) {
   loadSpecies();
   document.getElementById("form-title").textContent = "🎣 Log Catch";
   document.getElementById("catchForm").style.display = "block";
-  document.getElementById("statusMsg").textContent = "";
-  // Auto-fill weather (OWM) and water temp (USGS) for the dropped pin location
+  const statusEl = document.getElementById("autofill-status");
+  statusEl.className = "";
+  statusEl.textContent = "";
   autoFillConditions(e.latlng.lat, e.latlng.lng);
 });
 
 // ── Form helpers ──────────────────────────────────────────────────────────────
 function closeForm() {
   document.getElementById("catchForm").style.display = "none";
-  document.getElementById("statusMsg").textContent = "";
+  const statusEl = document.getElementById("autofill-status");
+  statusEl.className = "";
+  statusEl.textContent = "";
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
   editingId = null;
   clearFormFields();
@@ -718,14 +771,12 @@ function clearFormFields() {
   document.getElementById("windDirection").value = "";
   document.getElementById("moonPhase").value = "";
   document.getElementById("season").value = "";
-  // Reset water temp placeholder to default
-  document.getElementById("waterTemp").placeholder = "Water Temp (°F)";
 }
 
 function populateForm(c) {
   document.getElementById("waterBody").value = c.water_body || "";
   document.getElementById("catchDate").value = c.catch_date || "";
-  document.getElementById("catchTime").value = c.catch_time ? c.catch_time.slice(0,5) : "";
+  document.getElementById("catchTime").value = c.catch_time ? c.catch_time.slice(0, 5) : "";
   document.getElementById("size").value = c.size_in ?? "";
   document.getElementById("weight").value = c.weight_lbs ?? "";
   document.getElementById("bait").value = c.bait || "";
@@ -741,28 +792,30 @@ function populateForm(c) {
   document.getElementById("moonPhase").value = c.moon_phase || "";
   document.getElementById("season").value = c.season || "";
   loadSpecies(c.species);
+  // Recalculate auto fields from stored date when editing
+  if (c.catch_date) updateAutoFields(new Date(c.catch_date + "T12:00:00"));
 }
 
 function readForm() {
   return {
-    water_body:      document.getElementById("waterBody").value.trim() || null,
-    species:         document.getElementById("species").value || null,
-    catch_date:      document.getElementById("catchDate").value || null,
-    catch_time:      document.getElementById("catchTime").value || null,
-    size_in:         parseFloat(document.getElementById("size").value) || null,
-    weight_lbs:      parseFloat(document.getElementById("weight").value) || null,
-    bait:            document.getElementById("bait").value.trim() || null,
-    rig:             document.getElementById("rig").value.trim() || null,
-    retrieve:        document.getElementById("retrieve").value.trim() || null,
-    depth_ft:        parseFloat(document.getElementById("depth").value) || null,
-    water_temp_f:    parseFloat(document.getElementById("waterTemp").value) || null,
-    air_temp_f:      parseFloat(document.getElementById("airTemp").value) || null,
-    weather:         document.getElementById("weatherCondition").value || null,
-    wind_speed:      parseFloat(document.getElementById("windSpeed").value) || null,
-    wind_direction:  document.getElementById("windDirection").value || null,
-    pressure_inhg:   parseFloat(document.getElementById("pressure").value) || null,
-    moon_phase:      document.getElementById("moonPhase").value || null,
-    season:          document.getElementById("season").value || null
+    water_body:     document.getElementById("waterBody").value.trim() || null,
+    species:        document.getElementById("species").value || null,
+    catch_date:     document.getElementById("catchDate").value || null,
+    catch_time:     document.getElementById("catchTime").value || null,
+    size_in:        parseFloat(document.getElementById("size").value) || null,
+    weight_lbs:     parseFloat(document.getElementById("weight").value) || null,
+    bait:           document.getElementById("bait").value.trim() || null,
+    rig:            document.getElementById("rig").value.trim() || null,
+    retrieve:       document.getElementById("retrieve").value.trim() || null,
+    depth_ft:       parseFloat(document.getElementById("depth").value) || null,
+    water_temp_f:   parseFloat(document.getElementById("waterTemp").value) || null,
+    air_temp_f:     parseFloat(document.getElementById("airTemp").value) || null,
+    weather:        document.getElementById("weatherCondition").value || null,
+    wind_speed:     parseFloat(document.getElementById("windSpeed").value) || null,
+    wind_direction: document.getElementById("windDirection").value || null,
+    pressure_inhg:  parseFloat(document.getElementById("pressure").value) || null,
+    moon_phase:     document.getElementById("moonPhase").value || null,
+    season:         document.getElementById("season").value || null
   };
 }
 
@@ -773,9 +826,10 @@ async function saveCatch() {
   if (!waterBody || !species) { alert("Body of Water and Species are required."); return; }
 
   const saveBtn = document.getElementById("saveBtn");
-  const statusMsg = document.getElementById("statusMsg");
+  const statusEl = document.getElementById("autofill-status");
   saveBtn.disabled = true;
-  statusMsg.textContent = "Saving...";
+  statusEl.className = "loading";
+  statusEl.textContent = "Saving…";
 
   try {
     if (editingId) {
@@ -787,7 +841,8 @@ async function saveCatch() {
       const idx = allCatches.findIndex(c => c.id === editingId);
       if (idx !== -1) allCatches[idx] = updated;
       if (markers[editingId]) markers[editingId].setPopupContent(buildPopup(updated));
-      statusMsg.textContent = "Updated!";
+      statusEl.className = "success";
+      statusEl.textContent = "✅ Updated!";
     } else {
       const data = {
         username: localStorage.getItem("username") || "anonymous",
@@ -801,13 +856,15 @@ async function saveCatch() {
       if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
       const m = L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
       markers[saved.id] = m;
-      statusMsg.textContent = "Saved!";
+      statusEl.className = "success";
+      statusEl.textContent = "✅ Saved!";
     }
     applyFilters();
     setTimeout(closeForm, 700);
   } catch (err) {
     console.error("Save failed:", err);
-    statusMsg.textContent = "Save failed — check console.";
+    statusEl.className = "error";
+    statusEl.textContent = "❌ Save failed — check console.";
   } finally {
     saveBtn.disabled = false;
   }
@@ -836,7 +893,9 @@ function editCatch(id) {
   populateForm(c);
   document.getElementById("form-title").textContent = "✏️ Edit Catch";
   document.getElementById("catchForm").style.display = "block";
-  document.getElementById("statusMsg").textContent = "";
+  const statusEl = document.getElementById("autofill-status");
+  statusEl.className = "";
+  statusEl.textContent = "";
   if (window.innerWidth <= 700) {
     document.getElementById("list-pane").classList.remove("mobile-open");
     document.getElementById("map-pane").classList.remove("mobile-hidden");
@@ -949,6 +1008,213 @@ function renderList(catches) {
   });
 }
 
+// ── Shared filter state ───────────────────────────────────────────────────────
+// Single source of truth: filter values read from map panel inputs (always in DOM)
+// List panel mirrors the same inputs via renderFilterGrids()
+
+function buildFilterHTML() {
+  return `
+    <div class="filter-field">
+      <div class="filter-label">Water Body</div>
+      <input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Species</div>
+      <input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Username</div>
+      <input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Season</div>
+      <select id="f-season" onchange="applyFilters()">
+        <option value="">Any</option>
+        <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Weather</div>
+      <select id="f-weather" onchange="applyFilters()">
+        <option value="">Any</option>
+        <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
+        <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
+        <option>Snow</option><option>Thunderstorm</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Wind Direction</div>
+      <select id="f-wind-dir" onchange="applyFilters()">
+        <option value="">Any</option>
+        <option>N</option><option>NE</option><option>E</option><option>SE</option>
+        <option>S</option><option>SW</option><option>W</option><option>NW</option><option>Calm</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Moon Phase</div>
+      <select id="f-moon" onchange="applyFilters()">
+        <option value="">Any</option>
+        <option>New Moon</option><option>Waxing Crescent</option><option>First Quarter</option>
+        <option>Waxing Gibbous</option><option>Full Moon</option><option>Waning Gibbous</option>
+        <option>Last Quarter</option><option>Waning Crescent</option>
+      </select>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Bait / Lure</div>
+      <input type="text" id="f-bait" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Rig</div>
+      <input type="text" id="f-rig" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Retrieve</div>
+      <input type="text" id="f-retrieve" placeholder="Any" oninput="applyFilters()" />
+    </div>
+    <div class="filter-field" style="grid-column:1/-1">
+      <div class="filter-label">Date Range</div>
+      <div class="filter-range">
+        <input type="date" id="f-date-from" onchange="applyFilters()" />
+        <input type="date" id="f-date-to" onchange="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Size (in)</div>
+      <div class="filter-range">
+        <input type="number" id="f-size-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-size-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Weight (lbs)</div>
+      <div class="filter-range">
+        <input type="number" id="f-wt-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-wt-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Depth (ft)</div>
+      <div class="filter-range">
+        <input type="number" id="f-depth-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-depth-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Water Temp (°F)</div>
+      <div class="filter-range">
+        <input type="number" id="f-wtemp-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-wtemp-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Air Temp (°F)</div>
+      <div class="filter-range">
+        <input type="number" id="f-atemp-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-atemp-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Wind Speed (mph)</div>
+      <div class="filter-range">
+        <input type="number" id="f-wind-min" placeholder="Min" oninput="applyFilters()" />
+        <input type="number" id="f-wind-max" placeholder="Max" oninput="applyFilters()" />
+      </div>
+    </div>
+    <div class="filter-field">
+      <div class="filter-label">Pressure (inHg)</div>
+      <div class="filter-range">
+        <input type="number" id="f-pres-min" placeholder="Min" oninput="applyFilters()" step="0.01" />
+        <input type="number" id="f-pres-max" placeholder="Max" oninput="applyFilters()" step="0.01" />
+      </div>
+    </div>`;
+}
+
+// Filter values stored in a plain object — both panels read/write this
+let filterState = {};
+
+function getFilterState() {
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim().toLowerCase() : ""; };
+  const gv = id => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+  return {
+    water: g("f-water"), species: g("f-species"), user: g("f-user"),
+    season: g("f-season"), weather: g("f-weather"), windDir: g("f-wind-dir"),
+    moon: g("f-moon"), bait: g("f-bait"), rig: g("f-rig"), retrieve: g("f-retrieve"),
+    dateFrom: gv("f-date-from"), dateTo: gv("f-date-to"),
+    sizeMin: parseFloat(gv("f-size-min")) || null, sizeMax: parseFloat(gv("f-size-max")) || null,
+    wtMin: parseFloat(gv("f-wt-min")) || null, wtMax: parseFloat(gv("f-wt-max")) || null,
+    depMin: parseFloat(gv("f-depth-min")) || null, depMax: parseFloat(gv("f-depth-max")) || null,
+    wtempMin: parseFloat(gv("f-wtemp-min")) || null, wtempMax: parseFloat(gv("f-wtemp-max")) || null,
+    atempMin: parseFloat(gv("f-atemp-min")) || null, atempMax: parseFloat(gv("f-atemp-max")) || null,
+    windMin: parseFloat(gv("f-wind-min")) || null, windMax: parseFloat(gv("f-wind-max")) || null,
+    presMin: parseFloat(gv("f-pres-min")) || null, presMax: parseFloat(gv("f-pres-max")) || null,
+  };
+}
+
+function countActiveFilters(fs) {
+  let count = 0;
+  const checks = [fs.water, fs.species, fs.user, fs.season, fs.weather, fs.windDir,
+    fs.moon, fs.bait, fs.rig, fs.retrieve, fs.dateFrom, fs.dateTo];
+  checks.forEach(v => { if (v) count++; });
+  const nums = [fs.sizeMin, fs.sizeMax, fs.wtMin, fs.wtMax, fs.depMin, fs.depMax,
+    fs.wtempMin, fs.wtempMax, fs.atempMin, fs.atempMax, fs.windMin, fs.windMax, fs.presMin, fs.presMax];
+  nums.forEach(v => { if (v !== null) count++; });
+  return count;
+}
+
+function syncFilterGrids() {
+  // After the map panel is the source of truth, mirror values to list panel
+  const mapGrid = document.getElementById("shared-filter-grid");
+  const listGrid = document.getElementById("list-filter-grid");
+  if (!mapGrid || !listGrid) return;
+
+  // Copy current map grid HTML to list grid, but change IDs to avoid duplicates
+  // Instead, we keep ONLY the map grid as the real inputs, and render read-only display in list
+  // Actually simplest: render the same HTML in both, use filterState object as source of truth
+}
+
+// ── Init filter grids ─────────────────────────────────────────────────────────
+function initFilters() {
+  // Map panel gets the real interactive filter inputs
+  document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML();
+
+  // List panel gets a duplicate set with different IDs prefixed with "l-"
+  // But to keep things simple and DRY, the list panel just shows the same grid
+  // synced via filterState. We render a second copy with "l-" prefix IDs.
+  const listHTML = buildFilterHTML()
+    .replace(/id="f-/g, 'id="l-f-')
+    .replace(/id="f-/g, 'id="l-f-')  // in case of double pass
+    .replace(/oninput="applyFilters\(\)"/g, 'oninput="syncFromList(this);applyFilters()"')
+    .replace(/onchange="applyFilters\(\)"/g, 'onchange="syncFromList(this);applyFilters()"');
+  document.getElementById("list-filter-grid").innerHTML = listHTML;
+}
+
+function syncFromList(changedEl) {
+  // When list panel changes a filter, mirror it to the map panel
+  const lid = changedEl.id; // e.g. "l-f-water"
+  const mid = lid.replace(/^l-/, ""); // "f-water"
+  const mapEl = document.getElementById(mid);
+  if (mapEl) mapEl.value = changedEl.value;
+}
+
+function syncListFromMap() {
+  // Mirror map panel values to list panel after programmatic changes (clear)
+  const ids = ["f-water","f-species","f-user","f-season","f-weather","f-wind-dir","f-moon",
+    "f-bait","f-rig","f-retrieve","f-date-from","f-date-to","f-size-min","f-size-max",
+    "f-wt-min","f-wt-max","f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max",
+    "f-atemp-min","f-atemp-max","f-wind-min","f-wind-max","f-pres-min","f-pres-max"];
+  ids.forEach(id => {
+    const mapEl = document.getElementById(id);
+    const listEl = document.getElementById("l-" + id);
+    if (mapEl && listEl) listEl.value = mapEl.value;
+  });
+}
+
+// ── Map filter panel toggle ───────────────────────────────────────────────────
+function toggleMapFilterPanel() {
+  const panel = document.getElementById("map-filter-panel");
+  panel.classList.toggle("open");
+}
+
 // ── Filters ───────────────────────────────────────────────────────────────────
 function toggleFilters() {
   const panel = document.getElementById("filter-panel");
@@ -956,84 +1222,100 @@ function toggleFilters() {
   document.getElementById("filter-toggle-btn").textContent = panel.classList.contains("open") ? "▲ Filters" : "▼ Filters";
 }
 
-// CHANGE 2: applyFilters now also shows/hides map markers
 function applyFilters() {
-  const g = id => document.getElementById(id).value.trim().toLowerCase();
-  const gn = id => { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; };
-
-  const water = g("f-water"), species = g("f-species"), user = g("f-user");
-  const season = g("f-season"), weather = g("f-weather"), windDir = g("f-wind-dir");
-  const moon = g("f-moon"), bait = g("f-bait"), rig = g("f-rig"), retrieve = g("f-retrieve");
-  const dateFrom = document.getElementById("f-date-from").value;
-  const dateTo = document.getElementById("f-date-to").value;
-  const sizeMin = gn("f-size-min"), sizeMax = gn("f-size-max");
-  const wtMin = gn("f-wt-min"), wtMax = gn("f-wt-max");
-  const depMin = gn("f-depth-min"), depMax = gn("f-depth-max");
-  const wtempMin = gn("f-wtemp-min"), wtempMax = gn("f-wtemp-max");
-  const atempMin = gn("f-atemp-min"), atempMax = gn("f-atemp-max");
-  const windMin = gn("f-wind-min"), windMax = gn("f-wind-max");
-  const presMin = gn("f-pres-min"), presMax = gn("f-pres-max");
+  const fs = getFilterState();
 
   filteredCatches = allCatches.filter(c => {
-    if (water && !(c.water_body||"").toLowerCase().includes(water)) return false;
-    if (species && !(c.species||"").toLowerCase().includes(species)) return false;
-    if (user && !(c.username||"").toLowerCase().includes(user)) return false;
-    if (season && (c.season||"").toLowerCase() !== season) return false;
-    if (weather && (c.weather||"").toLowerCase() !== weather) return false;
-    if (windDir && (c.wind_direction||"").toLowerCase() !== windDir) return false;
-    if (moon && (c.moon_phase||"").toLowerCase() !== moon) return false;
-    if (bait && !(c.bait||"").toLowerCase().includes(bait)) return false;
-    if (rig && !(c.rig||"").toLowerCase().includes(rig)) return false;
-    if (retrieve && !(c.retrieve||"").toLowerCase().includes(retrieve)) return false;
-    if (dateFrom && c.catch_date && c.catch_date < dateFrom) return false;
-    if (dateTo && c.catch_date && c.catch_date > dateTo) return false;
-    if (sizeMin !== null && (c.size_in == null || c.size_in < sizeMin)) return false;
-    if (sizeMax !== null && (c.size_in == null || c.size_in > sizeMax)) return false;
-    if (wtMin !== null && (c.weight_lbs == null || c.weight_lbs < wtMin)) return false;
-    if (wtMax !== null && (c.weight_lbs == null || c.weight_lbs > wtMax)) return false;
-    if (depMin !== null && (c.depth_ft == null || c.depth_ft < depMin)) return false;
-    if (depMax !== null && (c.depth_ft == null || c.depth_ft > depMax)) return false;
-    if (wtempMin !== null && (c.water_temp_f == null || c.water_temp_f < wtempMin)) return false;
-    if (wtempMax !== null && (c.water_temp_f == null || c.water_temp_f > wtempMax)) return false;
-    if (atempMin !== null && (c.air_temp_f == null || c.air_temp_f < atempMin)) return false;
-    if (atempMax !== null && (c.air_temp_f == null || c.air_temp_f > atempMax)) return false;
-    if (windMin !== null && (c.wind_speed == null || c.wind_speed < windMin)) return false;
-    if (windMax !== null && (c.wind_speed == null || c.wind_speed > windMax)) return false;
-    if (presMin !== null && (c.pressure_inhg == null || c.pressure_inhg < presMin)) return false;
-    if (presMax !== null && (c.pressure_inhg == null || c.pressure_inhg > presMax)) return false;
+    if (fs.water && !(c.water_body||"").toLowerCase().includes(fs.water)) return false;
+    if (fs.species && !(c.species||"").toLowerCase().includes(fs.species)) return false;
+    if (fs.user && !(c.username||"").toLowerCase().includes(fs.user)) return false;
+    if (fs.season && (c.season||"").toLowerCase() !== fs.season) return false;
+    if (fs.weather && (c.weather||"").toLowerCase() !== fs.weather) return false;
+    if (fs.windDir && (c.wind_direction||"").toLowerCase() !== fs.windDir) return false;
+    if (fs.moon && (c.moon_phase||"").toLowerCase() !== fs.moon) return false;
+    if (fs.bait && !(c.bait||"").toLowerCase().includes(fs.bait)) return false;
+    if (fs.rig && !(c.rig||"").toLowerCase().includes(fs.rig)) return false;
+    if (fs.retrieve && !(c.retrieve||"").toLowerCase().includes(fs.retrieve)) return false;
+    if (fs.dateFrom && c.catch_date && c.catch_date < fs.dateFrom) return false;
+    if (fs.dateTo && c.catch_date && c.catch_date > fs.dateTo) return false;
+    if (fs.sizeMin !== null && (c.size_in == null || c.size_in < fs.sizeMin)) return false;
+    if (fs.sizeMax !== null && (c.size_in == null || c.size_in > fs.sizeMax)) return false;
+    if (fs.wtMin !== null && (c.weight_lbs == null || c.weight_lbs < fs.wtMin)) return false;
+    if (fs.wtMax !== null && (c.weight_lbs == null || c.weight_lbs > fs.wtMax)) return false;
+    if (fs.depMin !== null && (c.depth_ft == null || c.depth_ft < fs.depMin)) return false;
+    if (fs.depMax !== null && (c.depth_ft == null || c.depth_ft > fs.depMax)) return false;
+    if (fs.wtempMin !== null && (c.water_temp_f == null || c.water_temp_f < fs.wtempMin)) return false;
+    if (fs.wtempMax !== null && (c.water_temp_f == null || c.water_temp_f > fs.wtempMax)) return false;
+    if (fs.atempMin !== null && (c.air_temp_f == null || c.air_temp_f < fs.atempMin)) return false;
+    if (fs.atempMax !== null && (c.air_temp_f == null || c.air_temp_f > fs.atempMax)) return false;
+    if (fs.windMin !== null && (c.wind_speed == null || c.wind_speed < fs.windMin)) return false;
+    if (fs.windMax !== null && (c.wind_speed == null || c.wind_speed > fs.windMax)) return false;
+    if (fs.presMin !== null && (c.pressure_inhg == null || c.pressure_inhg < fs.presMin)) return false;
+    if (fs.presMax !== null && (c.pressure_inhg == null || c.pressure_inhg > fs.presMax)) return false;
     return true;
   });
 
-  // CHANGE 2: Sync map marker visibility with filter results
+  // Sync map marker visibility — grey out non-matching markers
   const filteredIds = new Set(filteredCatches.map(c => c.id));
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
+    const el = marker.getElement();
     if (filteredIds.has(c.id)) {
       if (!map.hasLayer(marker)) map.addLayer(marker);
+      if (el) el.style.filter = "";
+      if (el) el.style.opacity = "";
     } else {
-      if (map.hasLayer(marker)) map.removeLayer(marker);
+      // Keep marker on map but visually grey it out
+      if (!map.hasLayer(marker)) map.addLayer(marker);
+      if (el) el.style.filter = "grayscale(100%)";
+      if (el) el.style.opacity = "0.35";
     }
   });
 
-  // CHANGE 3: Clear button always visible — no display toggling needed
+  // Update filter badge on map button
+  const activeCount = countActiveFilters(fs);
+  const badge = document.getElementById("filter-badge");
+  const mapBtn = document.getElementById("map-filter-btn");
+  if (activeCount > 0) {
+    badge.textContent = activeCount;
+    badge.classList.add("visible");
+    mapBtn.classList.add("has-filters");
+  } else {
+    badge.classList.remove("visible");
+    mapBtn.classList.remove("has-filters");
+  }
+
   if (listOpen) renderList(filteredCatches);
+  syncListFromMap();
 }
 
 function clearFilters() {
-  ["f-water","f-species","f-user","f-bait","f-rig","f-retrieve",
-   "f-date-from","f-date-to","f-size-min","f-size-max","f-wt-min","f-wt-max",
-   "f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max","f-atemp-min","f-atemp-max",
-   "f-wind-min","f-wind-max","f-pres-min","f-pres-max"].forEach(id => document.getElementById(id).value = "");
-  ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => document.getElementById(id).value = "");
-  filteredCatches = [...allCatches];
-
-  // Restore all markers on the map
-  allCatches.forEach(c => {
-    const marker = markers[c.id];
-    if (marker && !map.hasLayer(marker)) map.addLayer(marker);
+  const ids = ["f-water","f-species","f-user","f-bait","f-rig","f-retrieve",
+    "f-date-from","f-date-to","f-size-min","f-size-max","f-wt-min","f-wt-max",
+    "f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max","f-atemp-min","f-atemp-max",
+    "f-wind-min","f-wind-max","f-pres-min","f-pres-max"];
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
   });
 
+  filteredCatches = [...allCatches];
+
+  // Restore all markers
+  allCatches.forEach(c => {
+    const marker = markers[c.id];
+    if (!marker) return;
+    if (!map.hasLayer(marker)) map.addLayer(marker);
+    const el = marker.getElement();
+    if (el) { el.style.filter = ""; el.style.opacity = ""; }
+  });
+
+  // Clear badge
+  document.getElementById("filter-badge").classList.remove("visible");
+  document.getElementById("map-filter-btn").classList.remove("has-filters");
+
+  syncListFromMap();
   if (listOpen) renderList(filteredCatches);
 }
 
@@ -1053,6 +1335,7 @@ async function loadCatches() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+initFilters();
 loadSpecies();
 checkUsername();
 loadCatches();
