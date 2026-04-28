@@ -343,7 +343,7 @@
         <button onclick="clearFilters()">✕ Clear All</button>
       </div>
       <div class="filter-grid" id="shared-filter-grid">
-        <!-- Filters rendered here by JS, shared with list panel -->
+        <!-- Filters rendered here by JS -->
       </div>
     </div>
 
@@ -482,19 +482,27 @@
 const SUPABASE_URL = "https://jtyporonxtgclzvkuttt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0eXBvcm9ueHRnY2x6dmt1dHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzgwNTIsImV4cCI6MjA5MjU1NDA1Mn0._n-95mvIjBvg-qqBB6VVp-DXmg3WsQTF1oiploM_P9I";
 
+// FIX: Only send Prefer header on write operations; never send empty Prefer on reads/deletes
 async function dbFetch(path, method = "GET", body = null) {
-  const opts = {
-    method,
-    headers: {
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY,
-      "Content-Type": "application/json",
-      "Prefer": (method === "POST" || method === "PATCH") ? "return=representation" : ""
-    }
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json"
   };
+  // Only POST and PATCH need Prefer: return=representation
+  if (method === "POST" || method === "PATCH") {
+    headers["Prefer"] = "return=representation";
+  }
+  const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, opts);
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("Supabase error:", res.status, errText);
+    throw new Error(errText);
+  }
+  // DELETE returns 204 No Content — don't try to parse JSON
+  if (res.status === 204) return null;
   return res.json().catch(() => null);
 }
 
@@ -652,22 +660,14 @@ function saveUsername() {
 
 // ── Moon / Season ─────────────────────────────────────────────────────────────
 function getMoonPhase(date) {
-  // Known new moon reference: Jan 6, 2000 at 18:14 UTC
   const KNOWN_NEW_MOON = new Date(Date.UTC(2000, 0, 6, 18, 14));
-  const LUNAR_CYCLE = 29.530588853; // days
+  const LUNAR_CYCLE = 29.530588853;
   const msPerDay = 1000 * 60 * 60 * 24;
   const daysSince = (date.getTime() - KNOWN_NEW_MOON.getTime()) / msPerDay;
-  // Normalise to 0–1 within the current cycle
   let phase = ((daysSince % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE / LUNAR_CYCLE;
   const phases = [
-    "New Moon",        // 0.00–0.06
-    "Waxing Crescent", // 0.06–0.25
-    "First Quarter",   // 0.25–0.31
-    "Waxing Gibbous",  // 0.31–0.50
-    "Full Moon",       // 0.50–0.56
-    "Waning Gibbous",  // 0.56–0.75
-    "Last Quarter",    // 0.75–0.81
-    "Waning Crescent"  // 0.81–1.00
+    "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
+    "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
   ];
   const boundaries = [0.06, 0.25, 0.31, 0.50, 0.56, 0.75, 0.81, 1.00];
   for (let i = 0; i < boundaries.length; i++) {
@@ -684,6 +684,7 @@ function getSeason(date) {
   return "Winter";
 }
 
+// FIX: prefillDateTime sets date/time AND immediately calculates moon/season
 function prefillDateTime() {
   const now = new Date();
   document.getElementById("catchDate").value = now.toISOString().split("T")[0];
@@ -696,7 +697,6 @@ function updateAutoFields(date) {
   document.getElementById("season").value = getSeason(date);
 }
 
-// Calculate moon/season immediately when date changes — no save needed
 document.getElementById("catchDate").addEventListener("change", function () {
   if (this.value) {
     const date = new Date(this.value + "T12:00:00");
@@ -713,7 +713,6 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 map.on("click", function (e) {
   if (editingId) return;
 
-  // Close map filter panel if open
   const mapPanel = document.getElementById("map-filter-panel");
   if (mapPanel.classList.contains("open")) {
     mapPanel.classList.remove("open");
@@ -728,6 +727,8 @@ map.on("click", function (e) {
   if (tempMarker) map.removeLayer(tempMarker);
   clickedLatLng = e.latlng;
   tempMarker = L.marker(e.latlng).addTo(map);
+
+  // FIX: clear non-computed fields first, then prefill date/time+moon/season
   clearFormFields();
   prefillDateTime();
   loadSpecies();
@@ -750,13 +751,15 @@ function closeForm() {
   clearFormFields();
 }
 
+// FIX: removed moonPhase and season from clearFormFields — they are always
+// computed from the date and should never be manually blanked
 function clearFormFields() {
   ["waterBody","size","weight","bait","rig","retrieve","depth",
    "waterTemp","airTemp","windSpeed","pressure"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("weatherCondition").value = "";
   document.getElementById("windDirection").value = "";
-  document.getElementById("moonPhase").value = "";
-  document.getElementById("season").value = "";
+  // moonPhase and season are intentionally NOT cleared here —
+  // they get set by prefillDateTime() or populateForm(), never blanked directly
 }
 
 function populateForm(c) {
@@ -778,7 +781,6 @@ function populateForm(c) {
   document.getElementById("moonPhase").value = c.moon_phase || "";
   document.getElementById("season").value = c.season || "";
   loadSpecies(c.species);
-  // Recalculate auto fields from stored date when editing
   if (c.catch_date) updateAutoFields(new Date(c.catch_date + "T12:00:00"));
 }
 
@@ -850,7 +852,7 @@ async function saveCatch() {
   } catch (err) {
     console.error("Save failed:", err);
     statusEl.className = "error";
-    statusEl.textContent = "❌ Save failed — check console.";
+    statusEl.textContent = "❌ Save failed — check console for details.";
   } finally {
     saveBtn.disabled = false;
   }
@@ -1065,10 +1067,7 @@ function renderList(catches) {
   });
 }
 
-// ── Shared filter state ───────────────────────────────────────────────────────
-// Single source of truth: filter values read from map panel inputs (always in DOM)
-// List panel mirrors the same inputs via renderFilterGrids()
-
+// ── Filter state ──────────────────────────────────────────────────────────────
 function buildFilterHTML() {
   return `
     <div class="filter-field">
@@ -1186,7 +1185,6 @@ function buildFilterHTML() {
     </div>`;
 }
 
-// Filter values stored in a plain object
 let filterState = {};
 
 function getFilterState() {
@@ -1217,12 +1215,10 @@ function countActiveFilters(fs) {
   return count;
 }
 
-// ── Map filter panel toggle ───────────────────────────────────────────────────
 function toggleMapFilterPanel() {
   document.getElementById("map-filter-panel").classList.toggle("open");
 }
 
-// ── Init filter grid (map panel only) ────────────────────────────────────────
 function initFilters() {
   document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML();
 }
@@ -1260,7 +1256,6 @@ function applyFilters() {
     return true;
   });
 
-  // Sync map marker visibility — grey out non-matching markers
   const filteredIds = new Set(filteredCatches.map(c => c.id));
   allCatches.forEach(c => {
     const marker = markers[c.id];
@@ -1271,14 +1266,12 @@ function applyFilters() {
       if (el) el.style.filter = "";
       if (el) el.style.opacity = "";
     } else {
-      // Keep marker on map but visually grey it out
       if (!map.hasLayer(marker)) map.addLayer(marker);
       if (el) el.style.filter = "grayscale(100%)";
       if (el) el.style.opacity = "0.35";
     }
   });
 
-  // Update filter badge on map button
   const activeCount = countActiveFilters(fs);
   const badge = document.getElementById("filter-badge");
   const mapBtn = document.getElementById("map-filter-btn");
@@ -1306,7 +1299,6 @@ function clearFilters() {
 
   filteredCatches = [...allCatches];
 
-  // Restore all markers
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
@@ -1315,7 +1307,6 @@ function clearFilters() {
     if (el) { el.style.filter = ""; el.style.opacity = ""; }
   });
 
-  // Clear badge
   document.getElementById("filter-badge").classList.remove("visible");
   document.getElementById("map-filter-btn").classList.remove("has-filters");
 
