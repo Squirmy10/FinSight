@@ -38,7 +38,7 @@
       padding: 0 14px; z-index: 3000; gap: 10px;
     }
     #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
-    #header-right { display: flex; align-items: center; gap: 8px; }
+    #header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; }
 
     .hdr-btn {
@@ -67,17 +67,22 @@
     }
     #list-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
 
-    /* ── Floating map filter button ── */
-    #map-filter-btn {
+    /* ── Floating map buttons ── */
+    #map-btn-group {
       position: absolute; top: 12px; right: 12px; z-index: 1000;
+      display: flex; flex-direction: column; gap: 6px; align-items: flex-end;
+    }
+
+    .map-float-btn {
       background: var(--white); color: var(--green-dark); border: 2px solid var(--green-mid);
       padding: 7px 13px; border-radius: var(--radius); font-family: 'Cabin', sans-serif;
       font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow);
       transition: background 0.15s, color 0.15s;
-      display: flex; align-items: center; gap: 6px;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
-    #map-filter-btn:hover { background: var(--green-mid); color: var(--white); }
-    #map-filter-btn.has-filters { background: var(--water); color: var(--white); border-color: var(--water); }
+    .map-float-btn:hover { background: var(--green-mid); color: var(--white); }
+    .map-float-btn.has-filters { background: var(--water); color: var(--white); border-color: var(--water); }
+    .map-float-btn.lake-active { background: #5a3e1b; color: var(--white); border-color: #5a3e1b; }
 
     /* ── Floating filter panel (map view) ── */
     #map-filter-panel {
@@ -119,7 +124,6 @@
     .filter-range { display: flex; gap: 4px; }
     .filter-range input { flex: 1; }
 
-    /* ── Active filter badge on map button ── */
     .filter-count-badge {
       background: #f9c74f; color: var(--green-dark); border-radius: 10px;
       padding: 1px 6px; font-size: 11px; font-weight: 700; display: none;
@@ -172,14 +176,12 @@
     }
     .form-popup h4 { font-family: 'Cabin Condensed', sans-serif; font-size: 16px; color: var(--green-dark); margin-bottom: 10px; }
 
-    /* ── Form sections ── */
     .section-label {
       font-size: 10px; font-weight: 600; color: var(--text-muted);
       text-transform: uppercase; letter-spacing: 0.5px;
       margin: 12px 0 6px; border-bottom: 1px solid var(--tan-dark); padding-bottom: 3px;
     }
 
-    /* ── Labeled field wrapper ── */
     .field-wrap {
       display: flex; flex-direction: column; margin-bottom: 7px;
     }
@@ -187,17 +189,11 @@
       font-size: 11px; font-weight: 600; color: var(--text-muted);
       margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px;
     }
-    /* User input fields — white background */
     .field-wrap.user-field input,
-    .field-wrap.user-field select {
-      background: var(--white);
-    }
-    /* Auto-calculated fields — light blue background */
+    .field-wrap.user-field select { background: var(--white); }
     .field-wrap.auto-field input,
     .field-wrap.auto-field select {
-      background: var(--auto-bg);
-      border-color: var(--auto-border);
-      color: #2a5f8f;
+      background: var(--auto-bg); border-color: var(--auto-border); color: #2a5f8f;
     }
 
     .form-popup input, .form-popup select {
@@ -206,10 +202,8 @@
       border-radius: 4px; color: var(--text);
     }
     .form-popup input[readonly] {
-      background: var(--auto-bg) !important;
-      border-color: var(--auto-border) !important;
-      color: #2a5f8f !important;
-      cursor: default;
+      background: var(--auto-bg) !important; border-color: var(--auto-border) !important;
+      color: #2a5f8f !important; cursor: default;
     }
 
     .species-row { display: flex; gap: 4px; }
@@ -230,41 +224,14 @@
     .btn-save:disabled { background: #aaa; cursor: not-allowed; }
     .btn-cancel { background: var(--tan-dark); color: var(--text); }
 
-    /* ── Auto-fill status box ── */
     #autofill-status {
-      border-radius: 6px;
-      padding: 8px 10px;
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.4;
-      margin-bottom: 6px;
-      display: none;
-      border: 1.5px solid transparent;
+      border-radius: 6px; padding: 8px 10px; font-size: 12px; font-weight: 600;
+      line-height: 1.4; margin-bottom: 6px; display: none; border: 1.5px solid transparent;
     }
-    #autofill-status.loading {
-      display: block;
-      background: #fff9e6;
-      border-color: #f9c74f;
-      color: #8a6800;
-    }
-    #autofill-status.success {
-      display: block;
-      background: #e8f7ec;
-      border-color: #4a9455;
-      color: #1a5c27;
-    }
-    #autofill-status.partial {
-      display: block;
-      background: #fff3e0;
-      border-color: #e8924a;
-      color: #7a3d00;
-    }
-    #autofill-status.error {
-      display: block;
-      background: #fde8e8;
-      border-color: #c0392b;
-      color: #7a1010;
-    }
+    #autofill-status.loading { display: block; background: #fff9e6; border-color: #f9c74f; color: #8a6800; }
+    #autofill-status.success { display: block; background: #e8f7ec; border-color: #4a9455; color: #1a5c27; }
+    #autofill-status.partial { display: block; background: #fff3e0; border-color: #e8924a; color: #7a3d00; }
+    #autofill-status.error { display: block; background: #fde8e8; border-color: #c0392b; color: #7a1010; }
 
     /* ── Username popup ── */
     .username-popup {
@@ -292,19 +259,138 @@
     .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.9; }
     .more-info.open { display: block; }
 
-    /* ── Greyed-out map markers ── */
     .marker-greyed { filter: grayscale(100%) opacity(0.4); }
+
+    /* ═══════════════════════════════════════════════
+       PHASE 4 — LAKE MANAGER STYLES
+    ═══════════════════════════════════════════════ */
+
+    /* Lake manager panel (side pane, like list-pane) */
+    #lake-pane {
+      width: 420px; min-width: 320px; max-width: 45vw;
+      background: var(--tan); border-left: 2px solid var(--tan-dark);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: width 0.25s ease;
+    }
+    #lake-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
+
+    #lake-header-bar {
+      background: #5a3e1b; color: var(--white);
+      padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
+      height: 40px; flex-shrink: 0;
+    }
+    #lake-header-bar span { font-size: 13px; font-weight: 600; }
+    #lake-header-bar button {
+      background: rgba(255,255,255,0.2); border: none; color: var(--white);
+      padding: 4px 10px; border-radius: 4px; font-size: 12px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; cursor: pointer;
+    }
+    #lake-header-bar button:hover { background: rgba(255,255,255,0.35); }
+
+    #lakes-list-wrap { flex: 1; overflow-y: auto; padding: 8px; }
+
+    .lake-card {
+      background: var(--white); border: 1px solid var(--tan-dark);
+      border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+      cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .lake-card:hover { box-shadow: var(--shadow); border-color: #5a3e1b; }
+    .lake-card.expanded { border-color: #5a3e1b; }
+
+    .lake-card-title { font-size: 14px; font-weight: 600; color: #3b2710; }
+    .lake-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .lake-card-actions { display: flex; gap: 4px; flex-shrink: 0; margin-top: 6px; }
+    .lake-card-actions button {
+      border: none; border-radius: 4px; padding: 4px 9px;
+      font-size: 11px; font-family: 'Cabin', sans-serif; cursor: pointer; font-weight: 600;
+    }
+    .btn-lake-edit { background: #fef3e2; color: #7a4a00; }
+    .btn-lake-edit:hover { background: #7a4a00; color: var(--white); }
+    .btn-lake-del { background: #fde8e8; color: #c0392b; }
+    .btn-lake-del:hover { background: #c0392b; color: var(--white); }
+    .btn-lake-fly { background: var(--water-light); color: var(--water); }
+    .btn-lake-fly:hover { background: var(--water); color: var(--white); }
+
+    .lake-detail { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tan-dark); font-size: 12px; line-height: 1.7; }
+    .lake-detail.open { display: block; }
+    .lake-detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; margin-bottom: 2px; }
+    .lake-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .lake-species-tag {
+      background: var(--green-pale); color: var(--green-dark); border-radius: 10px;
+      padding: 2px 8px; font-size: 11px; font-weight: 600;
+    }
+
+    /* Lake form modal */
+    #lake-form-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--white); padding: 20px; border-radius: var(--radius);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.28); z-index: 4500; width: 360px;
+      max-height: 90vh; overflow-y: auto; display: none;
+    }
+    #lake-form-modal h4 {
+      font-family: 'Cabin Condensed', sans-serif; font-size: 17px;
+      color: #3b2710; margin-bottom: 14px;
+    }
+    .lf-field { display: flex; flex-direction: column; margin-bottom: 10px; }
+    .lf-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .lf-sub { font-size: 10px; color: #aaa; margin-top: 2px; }
+    #lake-form-modal input, #lake-form-modal select, #lake-form-modal textarea {
+      width: 100%; padding: 7px 9px; font-size: 13px; font-family: 'Cabin', sans-serif;
+      border: 1px solid #ccc; border-radius: 4px; color: var(--text);
+    }
+    #lake-form-modal textarea { resize: vertical; min-height: 60px; }
+    .lf-species-row { display: flex; gap: 6px; }
+    .lf-species-row input { flex: 1; }
+    .lf-species-row button {
+      padding: 7px 10px; background: var(--green-pale); border: 1px solid var(--green-light);
+      color: var(--green-dark); border-radius: 4px; font-size: 12px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
+    }
+    #lf-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 24px; }
+    .lf-tag {
+      background: var(--green-pale); color: var(--green-dark); border-radius: 10px;
+      padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .lf-tag:hover { background: #c0392b; color: var(--white); }
+    .lf-depth-row { display: flex; gap: 6px; }
+    .lf-depth-row input { flex: 1; }
+    .lf-btn-row { display: flex; gap: 8px; margin-top: 14px; }
+    .lf-btn-row button {
+      flex: 1; padding: 9px; font-size: 13px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; border: none; border-radius: 4px; cursor: pointer;
+    }
+    .lf-save { background: #5a3e1b; color: var(--white); }
+    .lf-save:hover { background: #3b2710; }
+    .lf-save:disabled { background: #aaa; cursor: not-allowed; }
+    .lf-cancel { background: var(--tan-dark); color: var(--text); }
+
+    /* Lake map marker icon */
+    .lake-marker-icon {
+      background: #5a3e1b; border: 2px solid #3b2710; border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg); width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .lake-marker-icon span { transform: rotate(45deg); font-size: 12px; }
+
+    /* Overlay toggle badge on lake card */
+    .overlay-badge {
+      display: inline-block; background: var(--water-light); color: var(--water);
+      border-radius: 4px; padding: 1px 7px; font-size: 10px; font-weight: 700;
+      margin-left: 6px; vertical-align: middle;
+    }
 
     /* ── Mobile ── */
     @media (max-width: 700px) {
-      #list-pane {
+      #list-pane, #lake-pane {
         display: none; position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0;
         width: 100% !important; max-width: 100%; z-index: 2500;
       }
-      #list-pane.mobile-open { display: flex; }
+      #list-pane.mobile-open, #lake-pane.mobile-open { display: flex; }
       #map-pane.mobile-hidden { display: none; }
       .form-popup { width: calc(100vw - 20px); max-width: 340px; }
       #map-filter-panel { width: calc(100vw - 24px); right: 12px; }
+      #lake-form-modal { width: calc(100vw - 24px); }
     }
   </style>
 </head>
@@ -319,10 +405,90 @@
   <button onclick="saveUsername()">Start Fishing</button>
 </div>
 
+<!-- ── Lake Form Modal ── -->
+<div class="overlay" id="lake-overlay" style="z-index:4400;"></div>
+<div id="lake-form-modal">
+  <h4 id="lf-title">🏞 Add Lake / Body of Water</h4>
+
+  <div class="lf-field">
+    <span class="lf-label">Lake / Body of Water Name *</span>
+    <input type="text" id="lf-name" placeholder="e.g. Lake Coeur d'Alene" />
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Pin Location on Map</span>
+    <span class="lf-sub">Click "Pick on Map" then click the map to set coordinates.</span>
+    <div style="display:flex;gap:6px;margin-top:4px;">
+      <input type="number" id="lf-lat" placeholder="Latitude" step="0.00001" style="flex:1;" />
+      <input type="number" id="lf-lng" placeholder="Longitude" step="0.00001" style="flex:1;" />
+    </div>
+    <button onclick="startLakePick()" style="margin-top:6px;padding:6px;background:var(--water-light);border:1px solid var(--auto-border);color:var(--water);border-radius:4px;font-family:'Cabin',sans-serif;font-size:12px;font-weight:600;cursor:pointer;" id="lf-pick-btn">📍 Pick on Map</button>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Known Species</span>
+    <div class="lf-species-row">
+      <input type="text" id="lf-species-input" placeholder="e.g. Rainbow Trout" />
+      <button onclick="addLfSpecies()">+ Add</button>
+    </div>
+    <div id="lf-species-tags"></div>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Depth Range (ft)</span>
+    <div class="lf-depth-row">
+      <input type="number" id="lf-depth-min" placeholder="Min" />
+      <input type="number" id="lf-depth-max" placeholder="Max" />
+    </div>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Water Clarity</span>
+    <select id="lf-clarity">
+      <option value="">-- Select --</option>
+      <option>Clear</option>
+      <option>Slightly Stained</option>
+      <option>Stained</option>
+      <option>Muddy</option>
+      <option>Variable</option>
+    </select>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Structure Notes</span>
+    <textarea id="lf-structure" placeholder="e.g. Rocky points on north end, submerged timber at 15ft in southeast cove, main channel drops to 40ft..."></textarea>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Bathymetric Overlay Image URL <span style="font-weight:400;color:#aaa;">(optional)</span></span>
+    <input type="text" id="lf-overlay-url" placeholder="https://... (PNG or JPG)" />
+    <span class="lf-sub">Paste a direct link to a depth map image to overlay on the map.</span>
+  </div>
+
+  <div class="lf-field">
+    <span class="lf-label">Overlay Bounds <span style="font-weight:400;color:#aaa;">(optional — required if overlay URL set)</span></span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">
+      <input type="number" id="lf-bnw-lat" placeholder="NW Lat" step="0.00001" />
+      <input type="number" id="lf-bnw-lng" placeholder="NW Lng" step="0.00001" />
+      <input type="number" id="lf-bse-lat" placeholder="SE Lat" step="0.00001" />
+      <input type="number" id="lf-bse-lng" placeholder="SE Lng" step="0.00001" />
+    </div>
+    <span class="lf-sub">Northwest corner, then Southeast corner of the image.</span>
+  </div>
+
+  <div id="lf-status" style="display:none;padding:8px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:6px;"></div>
+
+  <div class="lf-btn-row">
+    <button class="lf-save" id="lf-save-btn" onclick="saveLake()">Save Lake</button>
+    <button class="lf-cancel" onclick="closeLakeForm()">Cancel</button>
+  </div>
+</div>
+
 <div id="header">
   <span id="header-title">🎣 FinSight</span>
   <div id="header-right">
     <span id="username-display"></span>
+    <button class="hdr-btn" id="lake-toggle-btn" onclick="toggleLakePane()">🏞 Lakes</button>
     <button class="hdr-btn" id="view-toggle-btn" onclick="toggleListView()">☰ List View</button>
   </div>
 </div>
@@ -331,10 +497,12 @@
   <div id="map-pane">
     <div id="map"></div>
 
-    <!-- Floating filter button on map -->
-    <button id="map-filter-btn" onclick="toggleMapFilterPanel()">
-      🔍 Filters <span class="filter-count-badge" id="filter-badge"></span>
-    </button>
+    <!-- Floating button group -->
+    <div id="map-btn-group">
+      <button class="map-float-btn" id="map-filter-btn" onclick="toggleMapFilterPanel()">
+        🔍 Filters <span class="filter-count-badge" id="filter-badge"></span>
+      </button>
+    </div>
 
     <!-- Floating filter panel on map -->
     <div id="map-filter-panel">
@@ -342,23 +510,21 @@
         <span>Filter Catches</span>
         <button onclick="clearFilters()">✕ Clear All</button>
       </div>
-      <div class="filter-grid" id="shared-filter-grid">
-        <!-- Filters rendered here by JS -->
-      </div>
+      <div class="filter-grid" id="shared-filter-grid"></div>
     </div>
 
     <!-- Catch Form -->
     <div id="catchForm" class="form-popup">
       <h4 id="form-title">🎣 Log Catch</h4>
-
-      <!-- Auto-fill status box -->
       <div id="autofill-status"></div>
 
       <div class="section-label">Required</div>
 
       <div class="field-wrap user-field">
         <span class="field-label">Body of Water</span>
-        <input type="text" id="waterBody" placeholder="e.g. Lake Coeur d'Alene" />
+        <!-- Phase 4: replaced plain input with a combo (datalist from lakes) -->
+        <input type="text" id="waterBody" placeholder="e.g. Lake Coeur d'Alene" list="lake-datalist" autocomplete="off" />
+        <datalist id="lake-datalist"></datalist>
       </div>
       <div class="field-wrap user-field">
         <span class="field-label">Species</span>
@@ -473,55 +639,54 @@
       <div id="catches-list"></div>
     </div>
   </div>
+
+  <!-- LAKE PANE (Phase 4) -->
+  <div id="lake-pane" class="hidden">
+    <div id="lake-header-bar">
+      <span>🏞 Lakes &amp; Water Bodies</span>
+      <button onclick="openLakeForm()">+ Add Lake</button>
+    </div>
+    <div id="lakes-list-wrap">
+      <div id="lakes-list" style="padding:8px;"></div>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 
-// ── Supabase ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SUPABASE
+// ─────────────────────────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://jtyporonxtgclzvkuttt.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0eXBvcm9ueHRnY2x6dmt1dHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NzgwNTIsImV4cCI6MjA5MjU1NDA1Mn0._n-95mvIjBvg-qqBB6VVp-DXmg3WsQTF1oiploM_P9I";
 
-// FIX: Only send Prefer header on write operations; never send empty Prefer on reads/deletes
 async function dbFetch(path, method = "GET", body = null) {
   const headers = {
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + SUPABASE_KEY,
     "Content-Type": "application/json"
   };
-  // Only POST and PATCH need Prefer: return=representation
-  if (method === "POST" || method === "PATCH") {
-    headers["Prefer"] = "return=representation";
-  }
+  if (method === "POST" || method === "PATCH") headers["Prefer"] = "return=representation";
   const opts = { method, headers };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, opts);
-  if (!res.ok) {
-    const errText = await res.text();
-    console.error("Supabase error:", res.status, errText);
-    throw new Error(errText);
-  }
-  // DELETE returns 204 No Content — don't try to parse JSON
+  if (!res.ok) { const e = await res.text(); console.error("Supabase error:", res.status, e); throw new Error(e); }
   if (res.status === 204) return null;
   return res.json().catch(() => null);
 }
 
-// ── Weather auto-fill ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// WEATHER / USGS
+// ─────────────────────────────────────────────────────────────────────────────
 async function fetchWeather(lat, lng) {
   const EDGE_URL = "https://jtyporonxtgclzvkuttt.supabase.co/functions/v1/get-weather";
   const res = await fetch(EDGE_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": SUPABASE_KEY,
-      "Authorization": "Bearer " + SUPABASE_KEY
-    },
+    headers: { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": "Bearer " + SUPABASE_KEY },
     body: JSON.stringify({ lat, lng })
   });
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Weather proxy ${res.status}: ${body}`);
-  }
+  if (!res.ok) { const b = await res.text().catch(() => ""); throw new Error(`Weather proxy ${res.status}: ${b}`); }
   const d = await res.json();
   if (d.main?.temp != null) document.getElementById("airTemp").value = Math.round(d.main.temp);
   if (d.main?.pressure != null) document.getElementById("pressure").value = (d.main.pressure * 0.02953).toFixed(2);
@@ -546,7 +711,6 @@ async function fetchWeather(lat, lng) {
   if (condition) document.getElementById("weatherCondition").value = condition;
 }
 
-// ── Water temp auto-fill (USGS) ───────────────────────────────────────────────
 async function fetchUSGSWaterTemp(lat, lng) {
   const delta = 0.3;
   const bBox = `${(lng-delta).toFixed(6)},${(lat-delta).toFixed(6)},${(lng+delta).toFixed(6)},${(lat+delta).toFixed(6)}`;
@@ -569,42 +733,26 @@ async function fetchUSGSWaterTemp(lat, lng) {
   return null;
 }
 
-// ── Combined auto-fill ────────────────────────────────────────────────────────
 async function autoFillConditions(lat, lng) {
   const statusEl = document.getElementById("autofill-status");
   statusEl.className = "loading";
   statusEl.textContent = "⏳ Fetching weather & water data…";
-
-  const [owmResult, usgsResult] = await Promise.allSettled([
-    fetchWeather(lat, lng),
-    fetchUSGSWaterTemp(lat, lng)
-  ]);
-
+  const [owmResult, usgsResult] = await Promise.allSettled([fetchWeather(lat, lng), fetchUSGSWaterTemp(lat, lng)]);
   const owmOk = owmResult.status === "fulfilled";
   let usgsOk = false;
-
   if (usgsResult.status === "fulfilled" && usgsResult.value) {
-    const { tempF, siteName } = usgsResult.value;
-    document.getElementById("waterTemp").value = tempF;
+    document.getElementById("waterTemp").value = usgsResult.value.tempF;
     usgsOk = true;
   }
-
-  if (owmOk && usgsOk) {
-    statusEl.className = "success";
-    statusEl.textContent = "✅ Weather & water temp auto-filled — edit any field as needed";
-  } else if (owmOk) {
-    statusEl.className = "partial";
-    statusEl.textContent = "⚠️ Weather auto-filled — no USGS station nearby, enter water temp manually";
-  } else if (usgsOk) {
-    statusEl.className = "partial";
-    statusEl.textContent = "⚠️ Water temp filled via USGS — weather fetch failed, enter conditions manually";
-  } else {
-    statusEl.className = "error";
-    statusEl.textContent = "❌ Auto-fill failed — please enter conditions manually";
-  }
+  if (owmOk && usgsOk) { statusEl.className = "success"; statusEl.textContent = "✅ Weather & water temp auto-filled — edit any field as needed"; }
+  else if (owmOk) { statusEl.className = "partial"; statusEl.textContent = "⚠️ Weather auto-filled — no USGS station nearby, enter water temp manually"; }
+  else if (usgsOk) { statusEl.className = "partial"; statusEl.textContent = "⚠️ Water temp filled via USGS — weather fetch failed, enter conditions manually"; }
+  else { statusEl.className = "error"; statusEl.textContent = "❌ Auto-fill failed — please enter conditions manually"; }
 }
 
-// ── State ─────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
 let allCatches = [];
 let filteredCatches = [];
 let markers = {};
@@ -612,8 +760,20 @@ let editingId = null;
 let tempMarker = null;
 let clickedLatLng = null;
 let listOpen = false;
+let lakeOpen = false;
 
-// ── Species ───────────────────────────────────────────────────────────────────
+// Phase 4 state
+let allLakes = [];
+let lakeMarkers = {};
+let lakeOverlays = {};
+let editingLakeId = null;
+let lfSpecies = [];
+let pickingLakeLocation = false;
+let tempLakeMarker = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SPECIES
+// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_SPECIES = ["Largemouth Bass","Smallmouth Bass","Rainbow Trout","Brown Trout","Crappie","Bluegill","Walleye","Northern Pike","Catfish"];
 
 function loadSpecies(selectVal) {
@@ -621,11 +781,7 @@ function loadSpecies(selectVal) {
   if (!list) { list = DEFAULT_SPECIES; localStorage.setItem("speciesList", JSON.stringify(list)); }
   const sel = document.getElementById("species");
   sel.innerHTML = "";
-  list.forEach(s => {
-    const o = document.createElement("option");
-    o.value = o.textContent = s;
-    sel.appendChild(o);
-  });
+  list.forEach(s => { const o = document.createElement("option"); o.value = o.textContent = s; sel.appendChild(o); });
   if (selectVal) sel.value = selectVal;
 }
 
@@ -638,7 +794,9 @@ function addSpecies() {
   loadSpecies(trimmed);
 }
 
-// ── Username ──────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// USERNAME
+// ─────────────────────────────────────────────────────────────────────────────
 function checkUsername() {
   const u = localStorage.getItem("username");
   if (!u) {
@@ -658,21 +816,17 @@ function saveUsername() {
   document.getElementById("username-display").textContent = "👤 " + val;
 }
 
-// ── Moon / Season ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MOON / SEASON
+// ─────────────────────────────────────────────────────────────────────────────
 function getMoonPhase(date) {
   const KNOWN_NEW_MOON = new Date(Date.UTC(2000, 0, 6, 18, 14));
   const LUNAR_CYCLE = 29.530588853;
   const msPerDay = 1000 * 60 * 60 * 24;
-  const daysSince = (date.getTime() - KNOWN_NEW_MOON.getTime()) / msPerDay;
-  let phase = ((daysSince % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE / LUNAR_CYCLE;
-  const phases = [
-    "New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
-    "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"
-  ];
+  let phase = ((((date.getTime() - KNOWN_NEW_MOON.getTime()) / msPerDay) % LUNAR_CYCLE) + LUNAR_CYCLE) % LUNAR_CYCLE / LUNAR_CYCLE;
+  const phases = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous","Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
   const boundaries = [0.06, 0.25, 0.31, 0.50, 0.56, 0.75, 0.81, 1.00];
-  for (let i = 0; i < boundaries.length; i++) {
-    if (phase < boundaries[i]) return phases[i];
-  }
+  for (let i = 0; i < boundaries.length; i++) if (phase < boundaries[i]) return phases[i];
   return "New Moon";
 }
 
@@ -684,7 +838,6 @@ function getSeason(date) {
   return "Winter";
 }
 
-// FIX: prefillDateTime sets date/time AND immediately calculates moon/season
 function prefillDateTime() {
   const now = new Date();
   document.getElementById("catchDate").value = now.toISOString().split("T")[0];
@@ -698,68 +851,66 @@ function updateAutoFields(date) {
 }
 
 document.getElementById("catchDate").addEventListener("change", function () {
-  if (this.value) {
-    const date = new Date(this.value + "T12:00:00");
-    updateAutoFields(date);
-  }
+  if (this.value) updateAutoFields(new Date(this.value + "T12:00:00"));
 });
 
-// ── Map ───────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// MAP
+// ─────────────────────────────────────────────────────────────────────────────
 const map = L.map("map").setView([46.731, -117.179], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors"
 }).addTo(map);
 
 map.on("click", function (e) {
+  // If picking lake location for the lake form
+  if (pickingLakeLocation) {
+    document.getElementById("lf-lat").value = e.latlng.lat.toFixed(6);
+    document.getElementById("lf-lng").value = e.latlng.lng.toFixed(6);
+    if (tempLakeMarker) map.removeLayer(tempLakeMarker);
+    tempLakeMarker = L.marker(e.latlng, { icon: lakeIcon() }).addTo(map);
+    stopLakePick();
+    openLakeFormModal();
+    return;
+  }
+
   if (editingId) return;
 
   const mapPanel = document.getElementById("map-filter-panel");
-  if (mapPanel.classList.contains("open")) {
-    mapPanel.classList.remove("open");
-    return;
-  }
-
-  if (listOpen) {
-    toggleListView();
-    return;
-  }
+  if (mapPanel.classList.contains("open")) { mapPanel.classList.remove("open"); return; }
+  if (listOpen) { toggleListView(); return; }
+  if (lakeOpen) { toggleLakePane(); return; }
 
   if (tempMarker) map.removeLayer(tempMarker);
   clickedLatLng = e.latlng;
   tempMarker = L.marker(e.latlng).addTo(map);
-
-  // FIX: clear non-computed fields first, then prefill date/time+moon/season
   clearFormFields();
   prefillDateTime();
   loadSpecies();
   document.getElementById("form-title").textContent = "🎣 Log Catch";
   document.getElementById("catchForm").style.display = "block";
   const statusEl = document.getElementById("autofill-status");
-  statusEl.className = "";
-  statusEl.textContent = "";
+  statusEl.className = ""; statusEl.textContent = "";
   autoFillConditions(e.latlng.lat, e.latlng.lng);
 });
 
-// ── Form helpers ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// CATCH FORM HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
 function closeForm() {
   document.getElementById("catchForm").style.display = "none";
   const statusEl = document.getElementById("autofill-status");
-  statusEl.className = "";
-  statusEl.textContent = "";
+  statusEl.className = ""; statusEl.textContent = "";
   if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
   editingId = null;
   clearFormFields();
 }
 
-// FIX: removed moonPhase and season from clearFormFields — they are always
-// computed from the date and should never be manually blanked
 function clearFormFields() {
   ["waterBody","size","weight","bait","rig","retrieve","depth",
    "waterTemp","airTemp","windSpeed","pressure"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("weatherCondition").value = "";
   document.getElementById("windDirection").value = "";
-  // moonPhase and season are intentionally NOT cleared here —
-  // they get set by prefillDateTime() or populateForm(), never blanked directly
 }
 
 function populateForm(c) {
@@ -786,79 +937,70 @@ function populateForm(c) {
 
 function readForm() {
   return {
-    water_body:     document.getElementById("waterBody").value.trim() || null,
-    species:        document.getElementById("species").value || null,
-    catch_date:     document.getElementById("catchDate").value || null,
-    catch_time:     document.getElementById("catchTime").value || null,
-    size_in:        parseFloat(document.getElementById("size").value) || null,
-    weight_lbs:     parseFloat(document.getElementById("weight").value) || null,
-    bait:           document.getElementById("bait").value.trim() || null,
-    rig:            document.getElementById("rig").value.trim() || null,
-    retrieve:       document.getElementById("retrieve").value.trim() || null,
-    depth_ft:       parseFloat(document.getElementById("depth").value) || null,
-    water_temp_f:   parseFloat(document.getElementById("waterTemp").value) || null,
-    air_temp_f:     parseFloat(document.getElementById("airTemp").value) || null,
-    weather:        document.getElementById("weatherCondition").value || null,
-    wind_speed:     parseFloat(document.getElementById("windSpeed").value) || null,
+    water_body: document.getElementById("waterBody").value.trim() || null,
+    species: document.getElementById("species").value || null,
+    catch_date: document.getElementById("catchDate").value || null,
+    catch_time: document.getElementById("catchTime").value || null,
+    size_in: parseFloat(document.getElementById("size").value) || null,
+    weight_lbs: parseFloat(document.getElementById("weight").value) || null,
+    bait: document.getElementById("bait").value.trim() || null,
+    rig: document.getElementById("rig").value.trim() || null,
+    retrieve: document.getElementById("retrieve").value.trim() || null,
+    depth_ft: parseFloat(document.getElementById("depth").value) || null,
+    water_temp_f: parseFloat(document.getElementById("waterTemp").value) || null,
+    air_temp_f: parseFloat(document.getElementById("airTemp").value) || null,
+    weather: document.getElementById("weatherCondition").value || null,
+    wind_speed: parseFloat(document.getElementById("windSpeed").value) || null,
     wind_direction: document.getElementById("windDirection").value || null,
-    pressure_inhg:  parseFloat(document.getElementById("pressure").value) || null,
-    moon_phase:     document.getElementById("moonPhase").value || null,
-    season:         document.getElementById("season").value || null
+    pressure_inhg: parseFloat(document.getElementById("pressure").value) || null,
+    moon_phase: document.getElementById("moonPhase").value || null,
+    season: document.getElementById("season").value || null
   };
 }
 
-// ── Save / Update ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE / UPDATE CATCH
+// ─────────────────────────────────────────────────────────────────────────────
 async function saveCatch() {
   const waterBody = document.getElementById("waterBody").value.trim();
   const species = document.getElementById("species").value;
   if (!waterBody || !species) { alert("Body of Water and Species are required."); return; }
-
   const saveBtn = document.getElementById("saveBtn");
   const statusEl = document.getElementById("autofill-status");
   saveBtn.disabled = true;
-  statusEl.className = "loading";
-  statusEl.textContent = "Saving…";
-
+  statusEl.className = "loading"; statusEl.textContent = "Saving…";
   try {
     if (editingId) {
       const data = readForm();
       const result = await dbFetch("catches?id=eq." + editingId, "PATCH", data);
-      const updated = Array.isArray(result) && result[0]
-        ? result[0]
-        : { ...allCatches.find(c => c.id === editingId), ...data };
+      const updated = Array.isArray(result) && result[0] ? result[0] : { ...allCatches.find(c => c.id === editingId), ...data };
       const idx = allCatches.findIndex(c => c.id === editingId);
       if (idx !== -1) allCatches[idx] = updated;
       if (markers[editingId]) markers[editingId].setPopupContent(buildPopup(updated));
-      statusEl.className = "success";
-      statusEl.textContent = "✅ Updated!";
+      statusEl.className = "success"; statusEl.textContent = "✅ Updated!";
     } else {
-      const data = {
-        username: localStorage.getItem("username") || "anonymous",
-        lat: clickedLatLng.lat,
-        lng: clickedLatLng.lng,
-        ...readForm()
-      };
+      const data = { username: localStorage.getItem("username") || "anonymous", lat: clickedLatLng.lat, lng: clickedLatLng.lng, ...readForm() };
       const result = await dbFetch("catches", "POST", data);
       const saved = Array.isArray(result) && result[0] ? result[0] : { ...data, id: "tmp-" + Date.now() };
       allCatches.unshift(saved);
       if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
       const m = L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
       markers[saved.id] = m;
-      statusEl.className = "success";
-      statusEl.textContent = "✅ Saved!";
+      statusEl.className = "success"; statusEl.textContent = "✅ Saved!";
     }
     applyFilters();
     setTimeout(closeForm, 700);
   } catch (err) {
     console.error("Save failed:", err);
-    statusEl.className = "error";
-    statusEl.textContent = "❌ Save failed — check console for details.";
+    statusEl.className = "error"; statusEl.textContent = "❌ Save failed — check console for details.";
   } finally {
     saveBtn.disabled = false;
   }
 }
 
-// ── Delete ────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE CATCH
+// ─────────────────────────────────────────────────────────────────────────────
 async function deleteCatch(id) {
   if (!confirm("Delete this catch? This cannot be undone.")) return;
   try {
@@ -866,13 +1008,12 @@ async function deleteCatch(id) {
     if (markers[id]) { map.removeLayer(markers[id]); delete markers[id]; }
     allCatches = allCatches.filter(c => c.id !== id);
     applyFilters();
-  } catch (err) {
-    console.error("Delete failed:", err);
-    alert("Delete failed — check console.");
-  }
+  } catch (err) { console.error("Delete failed:", err); alert("Delete failed — check console."); }
 }
 
-// ── Edit ──────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// EDIT CATCH
+// ─────────────────────────────────────────────────────────────────────────────
 function editCatch(id) {
   const c = allCatches.find(x => x.id === id);
   if (!c) return;
@@ -882,8 +1023,7 @@ function editCatch(id) {
   document.getElementById("form-title").textContent = "✏️ Edit Catch";
   document.getElementById("catchForm").style.display = "block";
   const statusEl = document.getElementById("autofill-status");
-  statusEl.className = "";
-  statusEl.textContent = "";
+  statusEl.className = ""; statusEl.textContent = "";
   if (window.innerWidth <= 700) {
     document.getElementById("list-pane").classList.remove("mobile-open");
     document.getElementById("map-pane").classList.remove("mobile-hidden");
@@ -894,9 +1034,10 @@ function editCatch(id) {
   map.setView([c.lat, c.lng]);
 }
 
-// ── Popup ─────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// POPUP
+// ─────────────────────────────────────────────────────────────────────────────
 const ND = '<span style="color:#c0392b;font-weight:600;font-size:11px;">No Data</span>';
-
 function nd(val, suffix) {
   if (val == null || val === "" || val === undefined) return ND;
   return suffix ? val + suffix : val;
@@ -905,77 +1046,48 @@ function nd(val, suffix) {
 function buildPopup(c) {
   const infoId = "mi-" + c.id;
   const wind = (c.wind_speed != null || c.wind_direction)
-    ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ")
-    : null;
-
+    ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") : null;
   return `
     <div style="font-family:'Cabin',sans-serif;min-width:220px;">
       <div style="font-size:15px;font-weight:700;color:#1a3a1f;margin-bottom:3px;">${c.species}</div>
       <div style="font-size:12px;color:#5a6b5c;margin-bottom:1px;">📍 ${c.water_body || ND} &nbsp;|&nbsp; 👤 ${c.username}</div>
       <div style="font-size:12px;color:#5a6b5c;margin-bottom:8px;">📅 ${c.catch_date || ND}${c.catch_time ? " " + c.catch_time.slice(0,5) : ""}</div>
-
       <div style="display:flex;gap:5px;margin-bottom:6px;">
         <button class="popup-button" onclick="toggleMoreInfo(this,'${infoId}')" style="flex:1;">More Info</button>
         <button class="popup-button" onclick="editCatch('${c.id}')" style="background:#d0e8f5;color:#2a5f8f;border-color:#a8d4ee;">✏️ Edit</button>
         <button class="popup-button" onclick="deleteCatch('${c.id}')" style="background:#fde8e8;color:#c0392b;border-color:#f5b8b8;">🗑 Delete</button>
       </div>
-
       <div id="${infoId}" class="more-info">
         <table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <tr style="border-bottom:1px solid #e0d4b8;">
-            <td colspan="2" style="padding:4px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Catch Details</td>
+          <tr style="border-bottom:1px solid #e0d4b8;"><td colspan="4" style="padding:4px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Catch Details</td></tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Size</td><td style="padding:3px 0;font-weight:600;">${nd(c.size_in, " in")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weight</td><td style="padding:3px 0;font-weight:600;">${nd(c.weight_lbs, " lbs")}</td>
           </tr>
           <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Size</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.size_in, " in")}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weight</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.weight_lbs, " lbs")}</td>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Depth</td><td style="padding:3px 0;font-weight:600;">${nd(c.depth_ft, " ft")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Water Temp</td><td style="padding:3px 0;font-weight:600;">${nd(c.water_temp_f, "°F")}</td>
           </tr>
           <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Depth</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.depth_ft, " ft")}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Water Temp</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.water_temp_f, "°F")}</td>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Bait</td><td style="padding:3px 0;font-weight:600;">${nd(c.bait)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Rig</td><td style="padding:3px 0;font-weight:600;">${nd(c.rig)}</td>
+          </tr>
+          <tr><td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Retrieve</td><td colspan="3" style="padding:3px 0;font-weight:600;">${nd(c.retrieve)}</td></tr>
+          <tr style="border-bottom:1px solid #e0d4b8;"><td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Conditions</td></tr>
+          <tr>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Air Temp</td><td style="padding:3px 0;font-weight:600;">${nd(c.air_temp_f, "°F")}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weather</td><td style="padding:3px 0;font-weight:600;">${nd(c.weather)}</td>
           </tr>
           <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Bait</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.bait)}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Rig</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.rig)}</td>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Wind</td><td style="padding:3px 0;font-weight:600;">${nd(wind)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Pressure</td><td style="padding:3px 0;font-weight:600;">${nd(c.pressure_inhg, " inHg")}</td>
           </tr>
           <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Retrieve</td>
-            <td colspan="3" style="padding:3px 0;font-weight:600;">${nd(c.retrieve)}</td>
+            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Moon</td><td style="padding:3px 0;font-weight:600;">${nd(c.moon_phase)}</td>
+            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Season</td><td style="padding:3px 0;font-weight:600;">${nd(c.season)}</td>
           </tr>
-          <tr style="border-bottom:1px solid #e0d4b8;">
-            <td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Conditions</td>
-          </tr>
-          <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Air Temp</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.air_temp_f, "°F")}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Weather</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.weather)}</td>
-          </tr>
-          <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Wind</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(wind)}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Pressure</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.pressure_inhg, " inHg")}</td>
-          </tr>
-          <tr>
-            <td style="padding:3px 6px 3px 0;color:#5a6b5c;font-size:11px;">Moon</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.moon_phase)}</td>
-            <td style="padding:3px 6px 3px 12px;color:#5a6b5c;font-size:11px;">Season</td>
-            <td style="padding:3px 0;font-weight:600;">${nd(c.season)}</td>
-          </tr>
-          <tr style="border-bottom:1px solid #e0d4b8;">
-            <td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Location</td>
-          </tr>
-          <tr>
-            <td colspan="4" style="padding:3px 0;font-weight:600;font-size:11px;">
-              ${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)}
-            </td>
-          </tr>
+          <tr style="border-bottom:1px solid #e0d4b8;"><td colspan="4" style="padding:6px 0 2px;font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;">Location</td></tr>
+          <tr><td colspan="4" style="padding:3px 0;font-weight:600;font-size:11px;">${parseFloat(c.lat).toFixed(5)}, ${parseFloat(c.lng).toFixed(5)}</td></tr>
         </table>
       </div>
     </div>`;
@@ -987,13 +1099,15 @@ function toggleMoreInfo(btn, id) {
   btn.textContent = el.classList.contains("open") ? "Less Info" : "More Info";
 }
 
-// ── List view toggle ──────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// LIST VIEW TOGGLE
+// ─────────────────────────────────────────────────────────────────────────────
 function toggleListView() {
+  if (lakeOpen) { toggleLakePane(); }
   listOpen = !listOpen;
   const btn = document.getElementById("view-toggle-btn");
   const listPane = document.getElementById("list-pane");
   const mapPane = document.getElementById("map-pane");
-
   if (window.innerWidth <= 700) {
     listPane.classList.toggle("mobile-open", listOpen);
     mapPane.classList.toggle("mobile-hidden", listOpen);
@@ -1001,28 +1115,26 @@ function toggleListView() {
     listPane.classList.toggle("hidden", !listOpen);
     setTimeout(() => map.invalidateSize(), 260);
   }
-
   btn.textContent = listOpen ? "🗺 Map" : "☰ List View";
   btn.classList.toggle("active", listOpen);
   if (listOpen) renderList(filteredCatches);
 }
 
-// ── Render list ───────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER LIST
+// ─────────────────────────────────────────────────────────────────────────────
 function renderList(catches) {
   const container = document.getElementById("catches-list");
   const countBar = document.getElementById("list-count-bar");
   countBar.textContent = catches.length + " catch" + (catches.length !== 1 ? "es" : "");
   container.innerHTML = "";
-
   if (!catches.length) {
     container.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 4px;">No catches match the current filters.</p>';
     return;
   }
-
   catches.forEach(c => {
     const wind = (c.wind_speed != null || c.wind_direction)
-      ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ")
-      : null;
+      ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") : null;
     const noData = '<span style="color:#c0392b;font-weight:600;font-size:11px;">No Data</span>';
     const nd = (v, suffix) => (v == null || v === "") ? noData : (suffix ? v + suffix : v);
     const card = document.createElement("div");
@@ -1041,20 +1153,14 @@ function renderList(catches) {
       <div class="card-detail" id="cd-${c.id}">
         <div class="detail-grid">
           <div class="detail-section">Catch Details</div>
-          <div>Size: ${nd(c.size_in, " in")}</div>
-          <div>Weight: ${nd(c.weight_lbs, " lbs")}</div>
-          <div>Bait: ${nd(c.bait)}</div>
-          <div>Rig: ${nd(c.rig)}</div>
-          <div>Retrieve: ${nd(c.retrieve)}</div>
-          <div>Water Temp: ${nd(c.water_temp_f, "°F")}</div>
+          <div>Size: ${nd(c.size_in, " in")}</div><div>Weight: ${nd(c.weight_lbs, " lbs")}</div>
+          <div>Bait: ${nd(c.bait)}</div><div>Rig: ${nd(c.rig)}</div>
+          <div>Retrieve: ${nd(c.retrieve)}</div><div>Water Temp: ${nd(c.water_temp_f, "°F")}</div>
           <div>Depth: ${nd(c.depth_ft, " ft")}</div>
           <div class="detail-section">Conditions</div>
-          <div>Air Temp: ${nd(c.air_temp_f, "°F")}</div>
-          <div>Weather: ${nd(c.weather)}</div>
-          <div>Wind: ${nd(wind)}</div>
-          <div>Pressure: ${nd(c.pressure_inhg, " inHg")}</div>
-          <div>Moon: ${nd(c.moon_phase)}</div>
-          <div>Season: ${nd(c.season)}</div>
+          <div>Air Temp: ${nd(c.air_temp_f, "°F")}</div><div>Weather: ${nd(c.weather)}</div>
+          <div>Wind: ${nd(wind)}</div><div>Pressure: ${nd(c.pressure_inhg, " inHg")}</div>
+          <div>Moon: ${nd(c.moon_phase)}</div><div>Season: ${nd(c.season)}</div>
           <div class="detail-section">Location</div>
           <div style="grid-column:1/-1">Lat ${parseFloat(c.lat).toFixed(5)}, Lng ${parseFloat(c.lng).toFixed(5)}</div>
         </div>
@@ -1067,125 +1173,42 @@ function renderList(catches) {
   });
 }
 
-// ── Filter state ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────────────────────────────────────────
 function buildFilterHTML() {
   return `
-    <div class="filter-field">
-      <div class="filter-label">Water Body</div>
-      <input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Species</div>
-      <input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Username</div>
-      <input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Season</div>
-      <select id="f-season" onchange="applyFilters()">
-        <option value="">Any</option>
-        <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
-      </select>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Weather</div>
-      <select id="f-weather" onchange="applyFilters()">
-        <option value="">Any</option>
-        <option>Clear</option><option>Partly Cloudy</option><option>Overcast</option>
-        <option>Light Rain</option><option>Heavy Rain</option><option>Fog</option>
-        <option>Snow</option><option>Thunderstorm</option>
-      </select>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Wind Direction</div>
-      <select id="f-wind-dir" onchange="applyFilters()">
-        <option value="">Any</option>
-        <option>N</option><option>NE</option><option>E</option><option>SE</option>
-        <option>S</option><option>SW</option><option>W</option><option>NW</option><option>Calm</option>
-      </select>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Moon Phase</div>
-      <select id="f-moon" onchange="applyFilters()">
-        <option value="">Any</option>
-        <option>New Moon</option><option>Waxing Crescent</option><option>First Quarter</option>
-        <option>Waxing Gibbous</option><option>Full Moon</option><option>Waning Gibbous</option>
-        <option>Last Quarter</option><option>Waning Crescent</option>
-      </select>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Bait / Lure</div>
-      <input type="text" id="f-bait" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Rig</div>
-      <input type="text" id="f-rig" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Retrieve</div>
-      <input type="text" id="f-retrieve" placeholder="Any" oninput="applyFilters()" />
-    </div>
-    <div class="filter-field" style="grid-column:1/-1">
-      <div class="filter-label">Date Range</div>
-      <div class="filter-range">
-        <input type="date" id="f-date-from" onchange="applyFilters()" />
-        <input type="date" id="f-date-to" onchange="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Size (in)</div>
-      <div class="filter-range">
-        <input type="number" id="f-size-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-size-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Weight (lbs)</div>
-      <div class="filter-range">
-        <input type="number" id="f-wt-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-wt-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Depth (ft)</div>
-      <div class="filter-range">
-        <input type="number" id="f-depth-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-depth-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Water Temp (°F)</div>
-      <div class="filter-range">
-        <input type="number" id="f-wtemp-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-wtemp-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Air Temp (°F)</div>
-      <div class="filter-range">
-        <input type="number" id="f-atemp-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-atemp-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Wind Speed (mph)</div>
-      <div class="filter-range">
-        <input type="number" id="f-wind-min" placeholder="Min" oninput="applyFilters()" />
-        <input type="number" id="f-wind-max" placeholder="Max" oninput="applyFilters()" />
-      </div>
-    </div>
-    <div class="filter-field">
-      <div class="filter-label">Pressure (inHg)</div>
-      <div class="filter-range">
-        <input type="number" id="f-pres-min" placeholder="Min" oninput="applyFilters()" step="0.01" />
-        <input type="number" id="f-pres-max" placeholder="Max" oninput="applyFilters()" step="0.01" />
-      </div>
-    </div>`;
+    <div class="filter-field"><div class="filter-label">Water Body</div><input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Species</div><input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Username</div><input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Season</div>
+      <select id="f-season" onchange="applyFilters()"><option value="">Any</option><option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option></select></div>
+    <div class="filter-field"><div class="filter-label">Weather</div>
+      <select id="f-weather" onchange="applyFilters()"><option value="">Any</option><option>Clear</option><option>Partly Cloudy</option><option>Overcast</option><option>Light Rain</option><option>Heavy Rain</option><option>Fog</option><option>Snow</option><option>Thunderstorm</option></select></div>
+    <div class="filter-field"><div class="filter-label">Wind Direction</div>
+      <select id="f-wind-dir" onchange="applyFilters()"><option value="">Any</option><option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option><option>Calm</option></select></div>
+    <div class="filter-field"><div class="filter-label">Moon Phase</div>
+      <select id="f-moon" onchange="applyFilters()"><option value="">Any</option><option>New Moon</option><option>Waxing Crescent</option><option>First Quarter</option><option>Waxing Gibbous</option><option>Full Moon</option><option>Waning Gibbous</option><option>Last Quarter</option><option>Waning Crescent</option></select></div>
+    <div class="filter-field"><div class="filter-label">Bait / Lure</div><input type="text" id="f-bait" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Rig</div><input type="text" id="f-rig" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Retrieve</div><input type="text" id="f-retrieve" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field" style="grid-column:1/-1"><div class="filter-label">Date Range</div>
+      <div class="filter-range"><input type="date" id="f-date-from" onchange="applyFilters()" /><input type="date" id="f-date-to" onchange="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Size (in)</div>
+      <div class="filter-range"><input type="number" id="f-size-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-size-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Weight (lbs)</div>
+      <div class="filter-range"><input type="number" id="f-wt-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-wt-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Depth (ft)</div>
+      <div class="filter-range"><input type="number" id="f-depth-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-depth-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Water Temp (°F)</div>
+      <div class="filter-range"><input type="number" id="f-wtemp-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-wtemp-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Air Temp (°F)</div>
+      <div class="filter-range"><input type="number" id="f-atemp-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-atemp-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Wind Speed (mph)</div>
+      <div class="filter-range"><input type="number" id="f-wind-min" placeholder="Min" oninput="applyFilters()" /><input type="number" id="f-wind-max" placeholder="Max" oninput="applyFilters()" /></div></div>
+    <div class="filter-field"><div class="filter-label">Pressure (inHg)</div>
+      <div class="filter-range"><input type="number" id="f-pres-min" placeholder="Min" oninput="applyFilters()" step="0.01" /><input type="number" id="f-pres-max" placeholder="Max" oninput="applyFilters()" step="0.01" /></div></div>`;
 }
-
-let filterState = {};
 
 function getFilterState() {
   const g = id => { const el = document.getElementById(id); return el ? el.value.trim().toLowerCase() : ""; };
@@ -1207,11 +1230,8 @@ function getFilterState() {
 
 function countActiveFilters(fs) {
   let count = 0;
-  [fs.water, fs.species, fs.user, fs.season, fs.weather, fs.windDir,
-   fs.moon, fs.bait, fs.rig, fs.retrieve, fs.dateFrom, fs.dateTo].forEach(v => { if (v) count++; });
-  [fs.sizeMin, fs.sizeMax, fs.wtMin, fs.wtMax, fs.depMin, fs.depMax,
-   fs.wtempMin, fs.wtempMax, fs.atempMin, fs.atempMax, fs.windMin, fs.windMax, fs.presMin, fs.presMax
-  ].forEach(v => { if (v !== null) count++; });
+  [fs.water,fs.species,fs.user,fs.season,fs.weather,fs.windDir,fs.moon,fs.bait,fs.rig,fs.retrieve,fs.dateFrom,fs.dateTo].forEach(v => { if (v) count++; });
+  [fs.sizeMin,fs.sizeMax,fs.wtMin,fs.wtMax,fs.depMin,fs.depMax,fs.wtempMin,fs.wtempMax,fs.atempMin,fs.atempMax,fs.windMin,fs.windMax,fs.presMin,fs.presMax].forEach(v => { if (v !== null) count++; });
   return count;
 }
 
@@ -1219,13 +1239,10 @@ function toggleMapFilterPanel() {
   document.getElementById("map-filter-panel").classList.toggle("open");
 }
 
-function initFilters() {
-  document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML();
-}
+function initFilters() { document.getElementById("shared-filter-grid").innerHTML = buildFilterHTML(); }
 
 function applyFilters() {
   const fs = getFilterState();
-
   filteredCatches = allCatches.filter(c => {
     if (fs.water && !(c.water_body||"").toLowerCase().includes(fs.water)) return false;
     if (fs.species && !(c.species||"").toLowerCase().includes(fs.species)) return false;
@@ -1255,50 +1272,29 @@ function applyFilters() {
     if (fs.presMax !== null && (c.pressure_inhg == null || c.pressure_inhg > fs.presMax)) return false;
     return true;
   });
-
   const filteredIds = new Set(filteredCatches.map(c => c.id));
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
+    if (!map.hasLayer(marker)) map.addLayer(marker);
     const el = marker.getElement();
-    if (filteredIds.has(c.id)) {
-      if (!map.hasLayer(marker)) map.addLayer(marker);
-      if (el) el.style.filter = "";
-      if (el) el.style.opacity = "";
-    } else {
-      if (!map.hasLayer(marker)) map.addLayer(marker);
-      if (el) el.style.filter = "grayscale(100%)";
-      if (el) el.style.opacity = "0.35";
-    }
+    if (filteredIds.has(c.id)) { if (el) { el.style.filter = ""; el.style.opacity = ""; } }
+    else { if (el) { el.style.filter = "grayscale(100%)"; el.style.opacity = "0.35"; } }
   });
-
   const activeCount = countActiveFilters(fs);
   const badge = document.getElementById("filter-badge");
   const mapBtn = document.getElementById("map-filter-btn");
-  if (activeCount > 0) {
-    badge.textContent = activeCount;
-    badge.classList.add("visible");
-    mapBtn.classList.add("has-filters");
-  } else {
-    badge.classList.remove("visible");
-    mapBtn.classList.remove("has-filters");
-  }
-
+  if (activeCount > 0) { badge.textContent = activeCount; badge.classList.add("visible"); mapBtn.classList.add("has-filters"); }
+  else { badge.classList.remove("visible"); mapBtn.classList.remove("has-filters"); }
   if (listOpen) renderList(filteredCatches);
 }
 
 function clearFilters() {
-  const ids = ["f-water","f-species","f-user","f-bait","f-rig","f-retrieve",
-    "f-date-from","f-date-to","f-size-min","f-size-max","f-wt-min","f-wt-max",
-    "f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max","f-atemp-min","f-atemp-max",
-    "f-wind-min","f-wind-max","f-pres-min","f-pres-max"];
-  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
-  ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = "";
-  });
-
+  ["f-water","f-species","f-user","f-bait","f-rig","f-retrieve","f-date-from","f-date-to",
+   "f-size-min","f-size-max","f-wt-min","f-wt-max","f-depth-min","f-depth-max","f-wtemp-min","f-wtemp-max",
+   "f-atemp-min","f-atemp-max","f-wind-min","f-wind-max","f-pres-min","f-pres-max"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  ["f-season","f-weather","f-wind-dir","f-moon"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   filteredCatches = [...allCatches];
-
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
@@ -1306,14 +1302,14 @@ function clearFilters() {
     const el = marker.getElement();
     if (el) { el.style.filter = ""; el.style.opacity = ""; }
   });
-
   document.getElementById("filter-badge").classList.remove("visible");
   document.getElementById("map-filter-btn").classList.remove("has-filters");
-
   if (listOpen) renderList(filteredCatches);
 }
 
-// ── Load catches ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// LOAD CATCHES
+// ─────────────────────────────────────────────────────────────────────────────
 async function loadCatches() {
   try {
     const catches = await dbFetch("catches?select=*&order=created_at.desc");
@@ -1323,16 +1319,429 @@ async function loadCatches() {
       const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(buildPopup(c));
       markers[c.id] = m;
     });
+  } catch (err) { console.error("Failed to load catches:", err); }
+}
+
+// =============================================================================
+// PHASE 4 — LAKE DATA LAYER
+// =============================================================================
+
+// ── Lake icon (brown teardrop) ────────────────────────────────────────────────
+function lakeIcon() {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      width:28px;height:28px;
+      background:#5a3e1b;border:2px solid #3b2710;
+      border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+      <span style="transform:rotate(45deg);font-size:13px;line-height:1;">🏞</span>
+    </div>`,
+    iconSize: [28, 28],
+    iconAnchor: [14, 28],
+    popupAnchor: [0, -30]
+  });
+}
+
+// ── Toggle lake pane ──────────────────────────────────────────────────────────
+function toggleLakePane() {
+  if (listOpen) toggleListView();
+  lakeOpen = !lakeOpen;
+  const btn = document.getElementById("lake-toggle-btn");
+  const lakePane = document.getElementById("lake-pane");
+  const mapPane = document.getElementById("map-pane");
+  if (window.innerWidth <= 700) {
+    lakePane.classList.toggle("mobile-open", lakeOpen);
+    mapPane.classList.toggle("mobile-hidden", lakeOpen);
+  } else {
+    lakePane.classList.toggle("hidden", !lakeOpen);
+    setTimeout(() => map.invalidateSize(), 260);
+  }
+  btn.textContent = lakeOpen ? "🗺 Map" : "🏞 Lakes";
+  btn.classList.toggle("active", lakeOpen);
+  if (lakeOpen) renderLakesList();
+}
+
+// ── Lake form open/close ──────────────────────────────────────────────────────
+function openLakeForm(lakeId) {
+  editingLakeId = lakeId || null;
+  lfSpecies = [];
+
+  // Clear form
+  ["lf-name","lf-lat","lf-lng","lf-depth-min","lf-depth-max","lf-overlay-url",
+   "lf-bnw-lat","lf-bnw-lng","lf-bse-lat","lf-bse-lng"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  document.getElementById("lf-clarity").value = "";
+  document.getElementById("lf-structure").value = "";
+  document.getElementById("lf-species-tags").innerHTML = "";
+  const statusEl = document.getElementById("lf-status");
+  statusEl.style.display = "none";
+
+  if (lakeId) {
+    const lake = allLakes.find(l => l.id === lakeId);
+    if (lake) {
+      document.getElementById("lf-title").textContent = "✏️ Edit Lake";
+      document.getElementById("lf-name").value = lake.name || "";
+      document.getElementById("lf-lat").value = lake.lat ?? "";
+      document.getElementById("lf-lng").value = lake.lng ?? "";
+      document.getElementById("lf-clarity").value = lake.avg_clarity || "";
+      document.getElementById("lf-structure").value = lake.structure_notes || "";
+      document.getElementById("lf-overlay-url").value = lake.overlay_url || "";
+      if (lake.overlay_bounds) {
+        try {
+          const b = typeof lake.overlay_bounds === "string" ? JSON.parse(lake.overlay_bounds) : lake.overlay_bounds;
+          if (b && b.length === 2) {
+            document.getElementById("lf-bnw-lat").value = b[0][0] ?? "";
+            document.getElementById("lf-bnw-lng").value = b[0][1] ?? "";
+            document.getElementById("lf-bse-lat").value = b[1][0] ?? "";
+            document.getElementById("lf-bse-lng").value = b[1][1] ?? "";
+          }
+        } catch(e) {}
+      }
+      if (lake.depth_min != null) document.getElementById("lf-depth-min").value = lake.depth_min;
+      if (lake.depth_max != null) document.getElementById("lf-depth-max").value = lake.depth_max;
+      // Load species tags
+      lfSpecies = lake.species_list ? [...lake.species_list] : [];
+      renderLfTags();
+    }
+  } else {
+    document.getElementById("lf-title").textContent = "🏞 Add Lake / Body of Water";
+  }
+
+  document.getElementById("lake-form-modal").style.display = "block";
+  document.getElementById("lake-overlay").style.display = "block";
+}
+
+function openLakeFormModal() {
+  document.getElementById("lake-form-modal").style.display = "block";
+  document.getElementById("lake-overlay").style.display = "block";
+}
+
+function closeLakeForm() {
+  document.getElementById("lake-form-modal").style.display = "none";
+  document.getElementById("lake-overlay").style.display = "none";
+  editingLakeId = null;
+  stopLakePick();
+  if (tempLakeMarker && !editingLakeId) { map.removeLayer(tempLakeMarker); tempLakeMarker = null; }
+}
+
+document.getElementById("lake-overlay").addEventListener("click", closeLakeForm);
+
+// ── Pick-on-map for lake location ─────────────────────────────────────────────
+function startLakePick() {
+  document.getElementById("lake-form-modal").style.display = "none";
+  document.getElementById("lake-overlay").style.display = "none";
+  pickingLakeLocation = true;
+  map.getContainer().style.cursor = "crosshair";
+  document.getElementById("lf-pick-btn").textContent = "📍 Click the map to set location…";
+}
+
+function stopLakePick() {
+  pickingLakeLocation = false;
+  map.getContainer().style.cursor = "";
+  const btn = document.getElementById("lf-pick-btn");
+  if (btn) btn.textContent = "📍 Pick on Map";
+}
+
+// ── Species tags in lake form ─────────────────────────────────────────────────
+function renderLfTags() {
+  const container = document.getElementById("lf-species-tags");
+  container.innerHTML = "";
+  lfSpecies.forEach((s, i) => {
+    const tag = document.createElement("span");
+    tag.className = "lf-tag";
+    tag.title = "Click to remove";
+    tag.innerHTML = s + ' <span style="font-size:10px;opacity:0.7;">✕</span>';
+    tag.addEventListener("click", () => { lfSpecies.splice(i, 1); renderLfTags(); });
+    container.appendChild(tag);
+  });
+}
+
+function addLfSpecies() {
+  const input = document.getElementById("lf-species-input");
+  const val = input.value.trim();
+  if (!val) return;
+  if (!lfSpecies.includes(val)) { lfSpecies.push(val); renderLfTags(); }
+  input.value = "";
+  input.focus();
+}
+
+document.getElementById("lf-species-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") { e.preventDefault(); addLfSpecies(); }
+});
+
+// ── Save lake ─────────────────────────────────────────────────────────────────
+async function saveLake() {
+  const name = document.getElementById("lf-name").value.trim();
+  if (!name) { alert("Lake name is required."); return; }
+
+  const lat = parseFloat(document.getElementById("lf-lat").value) || null;
+  const lng = parseFloat(document.getElementById("lf-lng").value) || null;
+
+  const nwLat = parseFloat(document.getElementById("lf-bnw-lat").value);
+  const nwLng = parseFloat(document.getElementById("lf-bnw-lng").value);
+  const seLat = parseFloat(document.getElementById("lf-bse-lat").value);
+  const seLng = parseFloat(document.getElementById("lf-bse-lng").value);
+  const overlayUrl = document.getElementById("lf-overlay-url").value.trim() || null;
+  const overlayBounds = (!isNaN(nwLat) && !isNaN(nwLng) && !isNaN(seLat) && !isNaN(seLng))
+    ? [[nwLat, nwLng], [seLat, seLng]] : null;
+
+  const data = {
+    name,
+    lat,
+    lng,
+    avg_clarity: document.getElementById("lf-clarity").value || null,
+    structure_notes: document.getElementById("lf-structure").value.trim() || null,
+    overlay_url: overlayUrl,
+    overlay_bounds: overlayBounds,
+    depth_min: parseFloat(document.getElementById("lf-depth-min").value) || null,
+    depth_max: parseFloat(document.getElementById("lf-depth-max").value) || null,
+    species_list: lfSpecies.length > 0 ? lfSpecies : null
+  };
+
+  const saveBtn = document.getElementById("lf-save-btn");
+  const statusEl = document.getElementById("lf-status");
+  saveBtn.disabled = true;
+  statusEl.style.display = "block";
+  statusEl.style.background = "#fff9e6"; statusEl.style.borderColor = "#f9c74f"; statusEl.style.color = "#8a6800";
+  statusEl.textContent = "Saving…";
+
+  try {
+    if (editingLakeId) {
+      const result = await dbFetch("lakes?id=eq." + editingLakeId, "PATCH", data);
+      const updated = Array.isArray(result) && result[0] ? result[0] : { ...allLakes.find(l => l.id === editingLakeId), ...data };
+      const idx = allLakes.findIndex(l => l.id === editingLakeId);
+      if (idx !== -1) allLakes[idx] = updated;
+      updateLakeMarker(updated);
+    } else {
+      const result = await dbFetch("lakes", "POST", data);
+      const saved = Array.isArray(result) && result[0] ? result[0] : { ...data, id: "tmp-" + Date.now() };
+      allLakes.unshift(saved);
+      addLakeMarker(saved);
+    }
+
+    updateLakeDatalist();
+    statusEl.style.background = "#e8f7ec"; statusEl.style.borderColor = "#4a9455"; statusEl.style.color = "#1a5c27";
+    statusEl.textContent = "✅ Saved!";
+    if (lakeOpen) renderLakesList();
+    setTimeout(closeLakeForm, 600);
   } catch (err) {
-    console.error("Failed to load catches:", err);
+    console.error("Lake save failed:", err);
+    statusEl.style.background = "#fde8e8"; statusEl.style.borderColor = "#c0392b"; statusEl.style.color = "#7a1010";
+    statusEl.textContent = "❌ Save failed — check console.";
+  } finally {
+    saveBtn.disabled = false;
   }
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Delete lake ───────────────────────────────────────────────────────────────
+async function deleteLake(id) {
+  if (!confirm("Delete this lake? This cannot be undone.")) return;
+  try {
+    await dbFetch("lakes?id=eq." + id, "DELETE");
+    // Remove marker
+    if (lakeMarkers[id]) { map.removeLayer(lakeMarkers[id]); delete lakeMarkers[id]; }
+    // Remove overlay
+    if (lakeOverlays[id]) { map.removeLayer(lakeOverlays[id]); delete lakeOverlays[id]; }
+    allLakes = allLakes.filter(l => l.id !== id);
+    updateLakeDatalist();
+    if (lakeOpen) renderLakesList();
+  } catch (err) { console.error("Lake delete failed:", err); alert("Delete failed — check console."); }
+}
+
+// ── Add / update lake map marker ──────────────────────────────────────────────
+function addLakeMarker(lake) {
+  if (lake.lat == null || lake.lng == null) return;
+  const m = L.marker([lake.lat, lake.lng], { icon: lakeIcon(), zIndexOffset: -100 })
+    .addTo(map)
+    .bindPopup(buildLakePopup(lake));
+  lakeMarkers[lake.id] = m;
+  // Add overlay if present
+  if (lake.overlay_url && lake.overlay_bounds) {
+    addLakeOverlay(lake);
+  }
+}
+
+function updateLakeMarker(lake) {
+  if (lakeMarkers[lake.id]) {
+    map.removeLayer(lakeMarkers[lake.id]);
+    delete lakeMarkers[lake.id];
+  }
+  if (lakeOverlays[lake.id]) {
+    map.removeLayer(lakeOverlays[lake.id]);
+    delete lakeOverlays[lake.id];
+  }
+  addLakeMarker(lake);
+}
+
+// ── Bathymetric overlay ───────────────────────────────────────────────────────
+function addLakeOverlay(lake) {
+  try {
+    const bounds = typeof lake.overlay_bounds === "string"
+      ? JSON.parse(lake.overlay_bounds) : lake.overlay_bounds;
+    if (!bounds || bounds.length < 2) return;
+    // Leaflet ImageOverlay: bounds = [[southWest lat,lng], [northEast lat,lng]]
+    // We store as [[NW lat,lng],[SE lat,lng]], convert:
+    const sw = [bounds[1][0], bounds[0][1]];
+    const ne = [bounds[0][0], bounds[1][1]];
+    const overlay = L.imageOverlay(lake.overlay_url, [sw, ne], {
+      opacity: 0.65,
+      interactive: false,
+      className: "lake-bathy-overlay"
+    }).addTo(map);
+    lakeOverlays[lake.id] = overlay;
+  } catch(e) { console.warn("Could not add lake overlay:", e); }
+}
+
+// ── Lake popup ────────────────────────────────────────────────────────────────
+function buildLakePopup(lake) {
+  const species = lake.species_list && lake.species_list.length > 0
+    ? lake.species_list.map(s => `<span class="lake-species-tag">${s}</span>`).join(" ")
+    : '<span style="color:#c0392b;font-size:11px;font-weight:600;">None listed</span>';
+
+  const depthStr = (lake.depth_min != null && lake.depth_max != null)
+    ? `${lake.depth_min}–${lake.depth_max} ft`
+    : (lake.depth_max != null ? `Up to ${lake.depth_max} ft` : "—");
+
+  return `
+    <div style="font-family:'Cabin',sans-serif;min-width:230px;max-width:280px;">
+      <div style="font-size:15px;font-weight:700;color:#3b2710;margin-bottom:4px;">🏞 ${lake.name}</div>
+      <div style="font-size:12px;color:#5a6b5c;margin-bottom:8px;">
+        ${lake.avg_clarity ? "💧 Clarity: <strong>" + lake.avg_clarity + "</strong>" : ""}
+        ${lake.avg_clarity && depthStr !== "—" ? " &nbsp;|&nbsp; " : ""}
+        ${depthStr !== "—" ? "⬇️ Depth: <strong>" + depthStr + "</strong>" : ""}
+      </div>
+      ${lake.structure_notes ? `<div style="font-size:12px;color:#3b2710;margin-bottom:8px;line-height:1.5;background:#fef9f0;padding:6px 8px;border-radius:4px;border-left:3px solid #5a3e1b;">${lake.structure_notes}</div>` : ""}
+      <div style="font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Known Species</div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;">${species}</div>
+      ${lake.overlay_url ? `<div style="font-size:11px;color:var(--water);margin-bottom:8px;">🗺 Bathymetric overlay active</div>` : ""}
+      <div style="display:flex;gap:5px;">
+        <button class="popup-button" onclick="editCatch_lake('${lake.id}')" style="background:#fef3e2;color:#7a4a00;border-color:#e8c88a;flex:1;">✏️ Edit Lake</button>
+        <button class="popup-button" onclick="deleteLake('${lake.id}')" style="background:#fde8e8;color:#c0392b;border-color:#f5b8b8;">🗑</button>
+      </div>
+    </div>`;
+}
+
+// Rename to avoid collision
+function editCatch_lake(id) { openLakeForm(id); }
+
+// ── Render lakes list ─────────────────────────────────────────────────────────
+function renderLakesList() {
+  const container = document.getElementById("lakes-list");
+  container.innerHTML = "";
+
+  if (!allLakes.length) {
+    container.innerHTML = `
+      <div style="padding:16px 4px;text-align:center;color:var(--text-muted);">
+        <div style="font-size:28px;margin-bottom:8px;">🏞</div>
+        <div style="font-size:13px;font-weight:600;">No lakes added yet.</div>
+        <div style="font-size:12px;margin-top:4px;">Click <strong>+ Add Lake</strong> above or tap the map after clicking Add Lake to pin a location.</div>
+      </div>`;
+    return;
+  }
+
+  allLakes.forEach(lake => {
+    const depthStr = (lake.depth_min != null && lake.depth_max != null)
+      ? `${lake.depth_min}–${lake.depth_max} ft`
+      : (lake.depth_max != null ? `Up to ${lake.depth_max} ft` : null);
+
+    const subParts = [];
+    if (lake.avg_clarity) subParts.push("💧 " + lake.avg_clarity);
+    if (depthStr) subParts.push("⬇️ " + depthStr);
+    if (lake.species_list && lake.species_list.length) subParts.push("🐟 " + lake.species_list.length + " species");
+
+    const card = document.createElement("div");
+    card.className = "lake-card";
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <div class="lake-card-title">${lake.name} ${lake.overlay_url ? '<span class="overlay-badge">Overlay</span>' : ''}</div>
+          ${subParts.length ? `<div class="lake-card-sub">${subParts.join(" &nbsp;|&nbsp; ")}</div>` : ""}
+        </div>
+      </div>
+      <div class="lake-card-actions">
+        ${lake.lat != null ? `<button class="btn-lake-fly" onclick="event.stopPropagation();flyToLake('${lake.id}')">🗺 Fly To</button>` : ""}
+        <button class="btn-lake-edit" onclick="event.stopPropagation();openLakeForm('${lake.id}')">✏️ Edit</button>
+        <button class="btn-lake-del" onclick="event.stopPropagation();deleteLake('${lake.id}')">Delete</button>
+      </div>
+      <div class="lake-detail" id="ld-${lake.id}">
+        ${lake.structure_notes ? `<div class="lake-detail-label">Structure Notes</div><div style="font-size:12px;line-height:1.6;color:var(--text);">${lake.structure_notes}</div>` : ""}
+        ${lake.species_list && lake.species_list.length ? `
+          <div class="lake-detail-label">Known Species</div>
+          <div class="lake-species-tags">${lake.species_list.map(s => `<span class="lake-species-tag">${s}</span>`).join("")}</div>
+        ` : ""}
+        ${lake.lat != null ? `<div class="lake-detail-label">Coordinates</div><div style="font-size:12px;">${parseFloat(lake.lat).toFixed(5)}, ${parseFloat(lake.lng).toFixed(5)}</div>` : ""}
+        ${lake.overlay_url ? `<div class="lake-detail-label">Bathymetric Overlay</div><div style="font-size:12px;word-break:break-all;color:var(--water);">${lake.overlay_url}</div>` : ""}
+      </div>`;
+
+    card.addEventListener("click", () => {
+      document.getElementById("ld-" + lake.id).classList.toggle("open");
+      card.classList.toggle("expanded");
+    });
+    container.appendChild(card);
+  });
+}
+
+// ── Fly to lake on map ────────────────────────────────────────────────────────
+function flyToLake(id) {
+  const lake = allLakes.find(l => l.id === id);
+  if (!lake || lake.lat == null) return;
+  // Close lake pane on mobile
+  if (window.innerWidth <= 700) {
+    document.getElementById("lake-pane").classList.remove("mobile-open");
+    document.getElementById("map-pane").classList.remove("mobile-hidden");
+    document.getElementById("lake-toggle-btn").textContent = "🏞 Lakes";
+    document.getElementById("lake-toggle-btn").classList.remove("active");
+    lakeOpen = false;
+  }
+  map.flyTo([lake.lat, lake.lng], 13, { duration: 1.2 });
+  setTimeout(() => { if (lakeMarkers[id]) lakeMarkers[id].openPopup(); }, 1400);
+}
+
+// ── Datalist (autocomplete water body in catch form) ──────────────────────────
+function updateLakeDatalist() {
+  const dl = document.getElementById("lake-datalist");
+  dl.innerHTML = "";
+  allLakes.forEach(lake => {
+    const opt = document.createElement("option");
+    opt.value = lake.name;
+    dl.appendChild(opt);
+  });
+}
+
+// When user selects a lake name in catch form, auto-suggest species if none picked
+document.getElementById("waterBody").addEventListener("change", function() {
+  const val = this.value.trim();
+  const lake = allLakes.find(l => l.name.toLowerCase() === val.toLowerCase());
+  if (lake && lake.species_list && lake.species_list.length > 0) {
+    // Merge lake species into local species list
+    let list = JSON.parse(localStorage.getItem("speciesList")) || DEFAULT_SPECIES;
+    let changed = false;
+    lake.species_list.forEach(s => { if (!list.includes(s)) { list.push(s); changed = true; } });
+    if (changed) { localStorage.setItem("speciesList", JSON.stringify(list)); loadSpecies(); }
+  }
+});
+
+// ── Load lakes ────────────────────────────────────────────────────────────────
+async function loadLakes() {
+  try {
+    const lakes = await dbFetch("lakes?select=*&order=name.asc");
+    allLakes = lakes || [];
+    allLakes.forEach(lake => addLakeMarker(lake));
+    updateLakeDatalist();
+  } catch (err) { console.error("Failed to load lakes:", err); }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
 initFilters();
 loadSpecies();
 checkUsername();
 loadCatches();
+loadLakes();
 
 </script>
 </body>
