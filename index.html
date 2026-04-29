@@ -32,14 +32,19 @@
 
     /* ── Header ── */
     #header {
-      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      position: fixed; top: 0; left: 0; right: 0; min-height: var(--header-h);
       background: var(--green-dark); color: var(--white);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 14px; z-index: 3000; gap: 10px;
+      padding: 0 14px; z-index: 3000; gap: 10px; flex-wrap: nowrap;
     }
-    #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
-    #header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; }
+    #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; }
+    #header-right { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+    #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+
+    @media (max-width: 480px) {
+      #username-display { display: none; }
+      .hdr-btn { padding: 5px 9px; font-size: 12px; }
+    }
 
     .hdr-btn {
       background: var(--green-mid); color: var(--white); border: none;
@@ -1729,9 +1734,14 @@ async function loadLakes() {
   try {
     const lakes = await dbFetch("lakes?select=*&order=name.asc");
     allLakes = lakes || [];
+    console.log("✅ Lakes loaded:", allLakes.length);
     allLakes.forEach(lake => addLakeMarker(lake));
     updateLakeDatalist();
-  } catch (err) { console.error("Failed to load lakes:", err); }
+  } catch (err) {
+    console.error("❌ Failed to load lakes. Check that the lakes table exists and has the required columns (lat, lng, depth_min, depth_max, species_list):", err);
+    allLakes = [];
+    // Don't re-throw — let the rest of the app work fine
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
