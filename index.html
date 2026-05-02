@@ -26,25 +26,22 @@
       --shadow: 0 2px 12px rgba(0,0,0,0.18);
       --radius: 8px;
       --header-h: 48px;
+      --brown: #5a3e1b;
+      --brown-dark: #3b2710;
     }
 
     html, body { height: 100%; font-family: 'Cabin', sans-serif; background: var(--tan); color: var(--text); overflow: hidden; }
 
     /* ── Header ── */
     #header {
-      position: fixed; top: 0; left: 0; right: 0; min-height: var(--header-h);
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
       background: var(--green-dark); color: var(--white);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 14px; z-index: 3000; gap: 10px; flex-wrap: nowrap;
+      padding: 0 14px; z-index: 3000; gap: 10px;
     }
-    #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; flex-shrink: 0; }
-    #header-right { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
-    #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
-
-    @media (max-width: 480px) {
-      #username-display { display: none; }
-      .hdr-btn { padding: 5px 9px; font-size: 12px; }
-    }
+    #header-title { font-family: 'Cabin Condensed', sans-serif; font-size: 18px; letter-spacing: 1px; white-space: nowrap; }
+    #header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #username-display { font-size: 12px; color: #adc9b0; white-space: nowrap; }
 
     .hdr-btn {
       background: var(--green-mid); color: var(--white); border: none;
@@ -87,9 +84,9 @@
     }
     .map-float-btn:hover { background: var(--green-mid); color: var(--white); }
     .map-float-btn.has-filters { background: var(--water); color: var(--white); border-color: var(--water); }
-    .map-float-btn.lake-active { background: #5a3e1b; color: var(--white); border-color: #5a3e1b; }
+    .map-float-btn.tile-active { background: #1a6688; color: var(--white); border-color: #1a6688; }
 
-    /* ── Floating filter panel (map view) ── */
+    /* ── Floating filter panel ── */
     #map-filter-panel {
       position: absolute; top: 50px; right: 12px; z-index: 1000;
       background: var(--white); border: 1px solid var(--tan-dark);
@@ -102,9 +99,7 @@
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--tan-dark);
     }
-    #map-filter-panel .panel-header span {
-      font-size: 13px; font-weight: 600; color: var(--green-dark);
-    }
+    #map-filter-panel .panel-header span { font-size: 13px; font-weight: 600; color: var(--green-dark); }
     #map-filter-panel .panel-header button {
       background: none; border: none; font-size: 12px; cursor: pointer;
       color: var(--text-muted); font-family: 'Cabin', sans-serif; padding: 2px 6px;
@@ -118,7 +113,7 @@
     }
     #list-header-bar span { font-size: 13px; font-weight: 600; flex: 1; }
 
-    /* ── Shared filter grid styles ── */
+    /* ── Shared filter grid ── */
     .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
     .filter-grid input, .filter-grid select {
       width: 100%; padding: 5px 7px; font-size: 12px; font-family: 'Cabin', sans-serif;
@@ -187,17 +182,13 @@
       margin: 12px 0 6px; border-bottom: 1px solid var(--tan-dark); padding-bottom: 3px;
     }
 
-    .field-wrap {
-      display: flex; flex-direction: column; margin-bottom: 7px;
-    }
+    .field-wrap { display: flex; flex-direction: column; margin-bottom: 7px; }
     .field-wrap .field-label {
       font-size: 11px; font-weight: 600; color: var(--text-muted);
       margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .field-wrap.user-field input,
-    .field-wrap.user-field select { background: var(--white); }
-    .field-wrap.auto-field input,
-    .field-wrap.auto-field select {
+    .field-wrap.user-field input, .field-wrap.user-field select { background: var(--white); }
+    .field-wrap.auto-field input, .field-wrap.auto-field select {
       background: var(--auto-bg); border-color: var(--auto-border); color: #2a5f8f;
     }
 
@@ -264,138 +255,175 @@
     .more-info { display: none; margin-top: 6px; font-size: 12px; line-height: 1.9; }
     .more-info.open { display: block; }
 
-    .marker-greyed { filter: grayscale(100%) opacity(0.4); }
-
-    /* ═══════════════════════════════════════════════
-       PHASE 4 — LAKE MANAGER STYLES
-    ═══════════════════════════════════════════════ */
-
-    /* Lake manager panel (side pane, like list-pane) */
-    #lake-pane {
-      width: 420px; min-width: 320px; max-width: 45vw;
+    /* ─────────────────────────────────────────────
+       WATER BODY MANAGER
+    ───────────────────────────────────────────── */
+    #wb-pane {
+      width: 440px; min-width: 320px; max-width: 48vw;
       background: var(--tan); border-left: 2px solid var(--tan-dark);
       display: flex; flex-direction: column; overflow: hidden;
       transition: width 0.25s ease;
     }
-    #lake-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
+    #wb-pane.hidden { width: 0; min-width: 0; border: none; overflow: hidden; }
 
-    #lake-header-bar {
-      background: #5a3e1b; color: var(--white);
+    #wb-header-bar {
+      background: var(--brown); color: var(--white);
       padding: 0 12px; display: flex; align-items: center; justify-content: space-between;
-      height: 40px; flex-shrink: 0;
+      height: 40px; flex-shrink: 0; gap: 6px;
     }
-    #lake-header-bar span { font-size: 13px; font-weight: 600; }
-    #lake-header-bar button {
+    #wb-header-bar span { font-size: 13px; font-weight: 600; flex: 1; }
+    #wb-header-bar button {
       background: rgba(255,255,255,0.2); border: none; color: var(--white);
       padding: 4px 10px; border-radius: 4px; font-size: 12px; font-family: 'Cabin', sans-serif;
-      font-weight: 600; cursor: pointer;
+      font-weight: 600; cursor: pointer; white-space: nowrap;
     }
-    #lake-header-bar button:hover { background: rgba(255,255,255,0.35); }
+    #wb-header-bar button:hover { background: rgba(255,255,255,0.35); }
 
-    #lakes-list-wrap { flex: 1; overflow-y: auto; padding: 8px; }
+    #wb-list-wrap { flex: 1; overflow-y: auto; padding: 8px; }
 
-    .lake-card {
+    /* Parent group headers in list */
+    .wb-group-header {
+      font-size: 11px; font-weight: 700; color: var(--brown); text-transform: uppercase;
+      letter-spacing: 0.7px; padding: 10px 4px 4px; border-bottom: 1px solid var(--tan-dark);
+      margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    }
+    .wb-group-header .wb-count {
+      background: var(--tan-dark); border-radius: 10px;
+      padding: 1px 6px; font-size: 10px; font-weight: 700; color: var(--text-muted);
+    }
+
+    .wb-card {
       background: var(--white); border: 1px solid var(--tan-dark);
-      border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px;
+      border-radius: var(--radius); padding: 10px 12px; margin-bottom: 6px;
       cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
     }
-    .lake-card:hover { box-shadow: var(--shadow); border-color: #5a3e1b; }
-    .lake-card.expanded { border-color: #5a3e1b; }
+    .wb-card:hover { box-shadow: var(--shadow); border-color: var(--brown); }
+    .wb-card.expanded { border-color: var(--brown); }
+    .wb-card.is-segment { border-left: 3px solid var(--water); }
 
-    .lake-card-title { font-size: 14px; font-weight: 600; color: #3b2710; }
-    .lake-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .lake-card-actions { display: flex; gap: 4px; flex-shrink: 0; margin-top: 6px; }
-    .lake-card-actions button {
+    .wb-card-title { font-size: 14px; font-weight: 600; color: var(--brown-dark); display: flex; align-items: center; gap: 6px; }
+    .wb-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .wb-type-badge {
+      font-size: 10px; font-weight: 700; border-radius: 8px; padding: 1px 6px;
+    }
+    .wb-type-river { background: #dbeeff; color: #1a4f8a; }
+    .wb-type-lake { background: var(--green-pale); color: var(--green-dark); }
+    .wb-type-reservoir { background: #f3e8ff; color: #5b2d8a; }
+    .wb-type-stream { background: #e0f7e9; color: #1a5c27; }
+    .wb-type-bay { background: #fff3e0; color: #7a3d00; }
+    .wb-type-other { background: var(--tan-dark); color: var(--text-muted); }
+    .wb-segment-badge {
+      background: #dbeeff; color: #1a4f8a; font-size: 10px; font-weight: 700;
+      border-radius: 8px; padding: 1px 6px;
+    }
+
+    .wb-card-actions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+    .wb-card-actions button {
       border: none; border-radius: 4px; padding: 4px 9px;
       font-size: 11px; font-family: 'Cabin', sans-serif; cursor: pointer; font-weight: 600;
     }
-    .btn-lake-edit { background: #fef3e2; color: #7a4a00; }
-    .btn-lake-edit:hover { background: #7a4a00; color: var(--white); }
-    .btn-lake-del { background: #fde8e8; color: #c0392b; }
-    .btn-lake-del:hover { background: #c0392b; color: var(--white); }
-    .btn-lake-fly { background: var(--water-light); color: var(--water); }
-    .btn-lake-fly:hover { background: var(--water); color: var(--white); }
+    .btn-wb-edit { background: #fef3e2; color: #7a4a00; }
+    .btn-wb-edit:hover { background: #7a4a00; color: var(--white); }
+    .btn-wb-del { background: #fde8e8; color: #c0392b; }
+    .btn-wb-del:hover { background: #c0392b; color: var(--white); }
+    .btn-wb-fly { background: var(--water-light); color: var(--water); }
+    .btn-wb-fly:hover { background: var(--water); color: var(--white); }
+    .btn-wb-draw { background: #e8f0fe; color: #1a56c4; }
+    .btn-wb-draw:hover { background: #1a56c4; color: var(--white); }
+    .btn-wb-shape-del { background: #fff3e0; color: #b85c00; }
+    .btn-wb-shape-del:hover { background: #b85c00; color: var(--white); }
 
-    .lake-detail { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tan-dark); font-size: 12px; line-height: 1.7; }
-    .lake-detail.open { display: block; }
-    .lake-detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; margin-bottom: 2px; }
-    .lake-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-    .lake-species-tag {
+    .wb-detail { display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tan-dark); font-size: 12px; line-height: 1.7; }
+    .wb-detail.open { display: block; }
+    .wb-detail-label { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; margin-bottom: 2px; }
+    .wb-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .wb-species-tag {
       background: var(--green-pale); color: var(--green-dark); border-radius: 10px;
       padding: 2px 8px; font-size: 11px; font-weight: 600;
     }
 
-    /* Lake form modal */
-    #lake-form-modal {
+    /* ── Draw mode banner ── */
+    #draw-banner {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(26,54,136,0.92); color: white; padding: 10px 20px;
+      border-radius: 24px; font-family: 'Cabin', sans-serif; font-size: 13px;
+      font-weight: 600; z-index: 1500; display: none; gap: 12px;
+      align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      white-space: nowrap; max-width: 90vw; flex-wrap: wrap; justify-content: center;
+    }
+    #draw-banner.active { display: flex; }
+    #draw-banner button {
+      background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.4);
+      color: white; border-radius: 12px; padding: 4px 12px; font-size: 12px;
+      font-family: 'Cabin', sans-serif; font-weight: 600; cursor: pointer;
+    }
+    #draw-banner button:hover { background: rgba(255,255,255,0.4); }
+    #draw-banner button.finish { background: #27ae60; border-color: #27ae60; }
+    #draw-banner button.cancel-draw { background: rgba(192,57,43,0.7); border-color: rgba(192,57,43,0.5); }
+
+    /* ── Water body form modal ── */
+    #wb-form-modal {
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
       background: var(--white); padding: 20px; border-radius: var(--radius);
-      box-shadow: 0 4px 30px rgba(0,0,0,0.28); z-index: 4500; width: 360px;
-      max-height: 90vh; overflow-y: auto; display: none;
+      box-shadow: 0 4px 30px rgba(0,0,0,0.28); z-index: 4500; width: 380px;
+      max-height: 92vh; overflow-y: auto; display: none;
     }
-    #lake-form-modal h4 {
+    #wb-form-modal h4 {
       font-family: 'Cabin Condensed', sans-serif; font-size: 17px;
-      color: #3b2710; margin-bottom: 14px;
+      color: var(--brown-dark); margin-bottom: 14px;
     }
-    .lf-field { display: flex; flex-direction: column; margin-bottom: 10px; }
-    .lf-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
-    .lf-sub { font-size: 10px; color: #aaa; margin-top: 2px; }
-    #lake-form-modal input, #lake-form-modal select, #lake-form-modal textarea {
+    .wf-field { display: flex; flex-direction: column; margin-bottom: 10px; }
+    .wf-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+    .wf-sub { font-size: 10px; color: #aaa; margin-top: 2px; line-height: 1.4; }
+    #wb-form-modal input, #wb-form-modal select, #wb-form-modal textarea {
       width: 100%; padding: 7px 9px; font-size: 13px; font-family: 'Cabin', sans-serif;
       border: 1px solid #ccc; border-radius: 4px; color: var(--text);
     }
-    #lake-form-modal textarea { resize: vertical; min-height: 60px; }
-    .lf-species-row { display: flex; gap: 6px; }
-    .lf-species-row input { flex: 1; }
-    .lf-species-row button {
+    #wb-form-modal textarea { resize: vertical; min-height: 60px; }
+
+    .wf-species-row { display: flex; gap: 6px; }
+    .wf-species-row input { flex: 1; }
+    .wf-species-row button {
       padding: 7px 10px; background: var(--green-pale); border: 1px solid var(--green-light);
       color: var(--green-dark); border-radius: 4px; font-size: 12px; font-family: 'Cabin', sans-serif;
       font-weight: 600; cursor: pointer; white-space: nowrap;
     }
-    #lf-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 24px; }
-    .lf-tag {
+    #wf-species-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 24px; }
+    .wf-tag {
       background: var(--green-pale); color: var(--green-dark); border-radius: 10px;
       padding: 2px 8px; font-size: 11px; font-weight: 600; cursor: pointer;
       display: flex; align-items: center; gap: 4px;
     }
-    .lf-tag:hover { background: #c0392b; color: var(--white); }
-    .lf-depth-row { display: flex; gap: 6px; }
-    .lf-depth-row input { flex: 1; }
-    .lf-btn-row { display: flex; gap: 8px; margin-top: 14px; }
-    .lf-btn-row button {
+    .wf-tag:hover { background: #c0392b; color: var(--white); }
+
+    .wf-btn-row { display: flex; gap: 8px; margin-top: 14px; }
+    .wf-btn-row button {
       flex: 1; padding: 9px; font-size: 13px; font-family: 'Cabin', sans-serif;
       font-weight: 600; border: none; border-radius: 4px; cursor: pointer;
     }
-    .lf-save { background: #5a3e1b; color: var(--white); }
-    .lf-save:hover { background: #3b2710; }
-    .lf-save:disabled { background: #aaa; cursor: not-allowed; }
-    .lf-cancel { background: var(--tan-dark); color: var(--text); }
+    .wf-save { background: var(--brown); color: var(--white); }
+    .wf-save:hover { background: var(--brown-dark); }
+    .wf-save:disabled { background: #aaa; cursor: not-allowed; }
+    .wf-cancel { background: var(--tan-dark); color: var(--text); }
 
-    /* Lake map marker icon */
-    .lake-marker-icon {
-      background: #5a3e1b; border: 2px solid #3b2710; border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg); width: 24px; height: 24px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .lake-marker-icon span { transform: rotate(45deg); font-size: 12px; }
+    /* Water body marker icon */
+    .wb-pin-icon { width: 28px; height: 28px; }
 
-    /* Overlay toggle badge on lake card */
-    .overlay-badge {
-      display: inline-block; background: var(--water-light); color: var(--water);
-      border-radius: 4px; padding: 1px 7px; font-size: 10px; font-weight: 700;
-      margin-left: 6px; vertical-align: middle;
-    }
+    /* Shape on map highlight */
+    .leaflet-interactive.wb-shape { cursor: pointer; }
 
     /* ── Mobile ── */
     @media (max-width: 700px) {
-      #list-pane, #lake-pane {
+      #list-pane, #wb-pane {
         display: none; position: fixed; top: var(--header-h); left: 0; right: 0; bottom: 0;
         width: 100% !important; max-width: 100%; z-index: 2500;
       }
-      #list-pane.mobile-open, #lake-pane.mobile-open { display: flex; }
+      #list-pane.mobile-open, #wb-pane.mobile-open { display: flex; }
       #map-pane.mobile-hidden { display: none; }
       .form-popup { width: calc(100vw - 20px); max-width: 340px; }
       #map-filter-panel { width: calc(100vw - 24px); right: 12px; }
-      #lake-form-modal { width: calc(100vw - 24px); }
+      #wb-form-modal { width: calc(100vw - 24px); }
     }
   </style>
 </head>
@@ -410,46 +438,67 @@
   <button onclick="saveUsername()">Start Fishing</button>
 </div>
 
-<!-- ── Lake Form Modal ── -->
-<div class="overlay" id="lake-overlay" style="z-index:4400;"></div>
-<div id="lake-form-modal">
-  <h4 id="lf-title">🏞 Add Lake / Body of Water</h4>
+<!-- ── Water Body Form Modal ── -->
+<div class="overlay" id="wb-overlay" style="z-index:4400;"></div>
+<div id="wb-form-modal">
+  <h4 id="wf-title">💧 Add Body of Water</h4>
 
-  <div class="lf-field">
-    <span class="lf-label">Lake / Body of Water Name *</span>
-    <input type="text" id="lf-name" placeholder="e.g. Lake Coeur d'Alene" />
+  <div class="wf-field">
+    <span class="wf-label">Name *</span>
+    <input type="text" id="wf-name" placeholder="e.g. Snake River — Hells Canyon" />
+    <span class="wf-sub">For long rivers, use "River Name — Reach/Section" to distinguish segments.</span>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Pin Location on Map</span>
-    <span class="lf-sub">Click "Pick on Map" then click the map to set coordinates.</span>
+  <div class="wf-field">
+    <span class="wf-label">Type</span>
+    <select id="wf-type">
+      <option value="">-- Select --</option>
+      <option>River</option>
+      <option>Lake</option>
+      <option>Reservoir</option>
+      <option>Stream</option>
+      <option>Bay</option>
+      <option>Other</option>
+    </select>
+  </div>
+
+  <div class="wf-field">
+    <span class="wf-label">Parent Water Body <span style="font-weight:400;color:#aaa;">(optional — for segments)</span></span>
+    <input type="text" id="wf-parent" placeholder="e.g. Snake River" list="wb-parent-datalist" autocomplete="off" />
+    <datalist id="wb-parent-datalist"></datalist>
+    <span class="wf-sub">Group related segments under a shared parent name. Leave blank for standalone water bodies.</span>
+  </div>
+
+  <div class="wf-field">
+    <span class="wf-label">Pin Location <span style="font-weight:400;color:#aaa;">(reference point)</span></span>
+    <span class="wf-sub">Click "Pick on Map" to drop a reference pin, or draw a shape on the map for full coverage.</span>
     <div style="display:flex;gap:6px;margin-top:4px;">
-      <input type="number" id="lf-lat" placeholder="Latitude" step="0.00001" style="flex:1;" />
-      <input type="number" id="lf-lng" placeholder="Longitude" step="0.00001" style="flex:1;" />
+      <input type="number" id="wf-lat" placeholder="Latitude" step="0.00001" style="flex:1;" />
+      <input type="number" id="wf-lng" placeholder="Longitude" step="0.00001" style="flex:1;" />
     </div>
-    <button onclick="startLakePick()" style="margin-top:6px;padding:6px;background:var(--water-light);border:1px solid var(--auto-border);color:var(--water);border-radius:4px;font-family:'Cabin',sans-serif;font-size:12px;font-weight:600;cursor:pointer;" id="lf-pick-btn">📍 Pick on Map</button>
+    <button onclick="startWbPick()" style="margin-top:6px;padding:6px;background:var(--water-light);border:1px solid var(--auto-border);color:var(--water);border-radius:4px;font-family:'Cabin',sans-serif;font-size:12px;font-weight:600;cursor:pointer;" id="wf-pick-btn">📍 Pick on Map</button>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Known Species</span>
-    <div class="lf-species-row">
-      <input type="text" id="lf-species-input" placeholder="e.g. Rainbow Trout" />
-      <button onclick="addLfSpecies()">+ Add</button>
+  <div class="wf-field">
+    <span class="wf-label">Known Species</span>
+    <div class="wf-species-row">
+      <input type="text" id="wf-species-input" placeholder="e.g. Rainbow Trout" />
+      <button onclick="addWfSpecies()">+ Add</button>
     </div>
-    <div id="lf-species-tags"></div>
+    <div id="wf-species-tags"></div>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Depth Range (ft)</span>
-    <div class="lf-depth-row">
-      <input type="number" id="lf-depth-min" placeholder="Min" />
-      <input type="number" id="lf-depth-max" placeholder="Max" />
+  <div class="wf-field">
+    <span class="wf-label">Depth Range (ft)</span>
+    <div style="display:flex;gap:6px;">
+      <input type="number" id="wf-depth-min" placeholder="Min" style="flex:1;" />
+      <input type="number" id="wf-depth-max" placeholder="Max" style="flex:1;" />
     </div>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Water Clarity</span>
-    <select id="lf-clarity">
+  <div class="wf-field">
+    <span class="wf-label">Water Clarity</span>
+    <select id="wf-clarity">
       <option value="">-- Select --</option>
       <option>Clear</option>
       <option>Slightly Stained</option>
@@ -459,41 +508,31 @@
     </select>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Structure Notes</span>
-    <textarea id="lf-structure" placeholder="e.g. Rocky points on north end, submerged timber at 15ft in southeast cove, main channel drops to 40ft..."></textarea>
+  <div class="wf-field">
+    <span class="wf-label">Structure / Access Notes</span>
+    <textarea id="wf-structure" placeholder="e.g. Rocky points on north end, submerged timber at 15ft, main channel drops to 40ft, boat launch at mile marker 12..."></textarea>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Bathymetric Overlay Image URL <span style="font-weight:400;color:#aaa;">(optional)</span></span>
-    <input type="text" id="lf-overlay-url" placeholder="https://... (PNG or JPG)" />
-    <span class="lf-sub">Paste a direct link to a depth map image to overlay on the map.</span>
+  <div class="wf-field">
+    <span class="wf-label">External Info URL <span style="font-weight:400;color:#aaa;">(optional)</span></span>
+    <input type="text" id="wf-info-url" placeholder="https://fish.idaho.gov/..." />
+    <span class="wf-sub">Link to fish & game page, flow gauge, or any reference. Used by the AI suggester.</span>
   </div>
 
-  <div class="lf-field">
-    <span class="lf-label">Overlay Bounds <span style="font-weight:400;color:#aaa;">(optional — required if overlay URL set)</span></span>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">
-      <input type="number" id="lf-bnw-lat" placeholder="NW Lat" step="0.00001" />
-      <input type="number" id="lf-bnw-lng" placeholder="NW Lng" step="0.00001" />
-      <input type="number" id="lf-bse-lat" placeholder="SE Lat" step="0.00001" />
-      <input type="number" id="lf-bse-lng" placeholder="SE Lng" step="0.00001" />
-    </div>
-    <span class="lf-sub">Northwest corner, then Southeast corner of the image.</span>
-  </div>
+  <div id="wf-status" style="display:none;padding:8px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:6px;"></div>
 
-  <div id="lf-status" style="display:none;padding:8px;border-radius:6px;font-size:12px;font-weight:600;margin-bottom:6px;"></div>
-
-  <div class="lf-btn-row">
-    <button class="lf-save" id="lf-save-btn" onclick="saveLake()">Save Lake</button>
-    <button class="lf-cancel" onclick="closeLakeForm()">Cancel</button>
+  <div class="wf-btn-row">
+    <button class="wf-save" id="wf-save-btn" onclick="saveWaterBody()">Save</button>
+    <button class="wf-cancel" onclick="closeWbForm()">Cancel</button>
   </div>
 </div>
 
+<!-- ── Header ── -->
 <div id="header">
   <span id="header-title">🎣 FinSight</span>
   <div id="header-right">
     <span id="username-display"></span>
-    <button class="hdr-btn" id="lake-toggle-btn" onclick="toggleLakePane()">🏞 Lakes</button>
+    <button class="hdr-btn" id="wb-toggle-btn" onclick="toggleWbPane()">💧 Waters</button>
     <button class="hdr-btn" id="view-toggle-btn" onclick="toggleListView()">☰ List View</button>
   </div>
 </div>
@@ -502,14 +541,24 @@
   <div id="map-pane">
     <div id="map"></div>
 
+    <!-- Draw mode banner -->
+    <div id="draw-banner">
+      <span id="draw-banner-text">Click to add points. Double-click to finish.</span>
+      <button class="finish" onclick="finishDraw()">✓ Finish Shape</button>
+      <button class="cancel-draw" onclick="cancelDraw()">✕ Cancel</button>
+    </div>
+
     <!-- Floating button group -->
     <div id="map-btn-group">
       <button class="map-float-btn" id="map-filter-btn" onclick="toggleMapFilterPanel()">
         🔍 Filters <span class="filter-count-badge" id="filter-badge"></span>
       </button>
+      <button class="map-float-btn" id="tile-toggle-btn" onclick="toggleSeaMapTile()" title="Toggle depth / nautical tile overlay">
+        🌊 Depth Layer
+      </button>
     </div>
 
-    <!-- Floating filter panel on map -->
+    <!-- Floating filter panel -->
     <div id="map-filter-panel">
       <div class="panel-header">
         <span>Filter Catches</span>
@@ -527,9 +576,8 @@
 
       <div class="field-wrap user-field">
         <span class="field-label">Body of Water</span>
-        <!-- Phase 4: replaced plain input with a combo (datalist from lakes) -->
-        <input type="text" id="waterBody" placeholder="e.g. Lake Coeur d'Alene" list="lake-datalist" autocomplete="off" />
-        <datalist id="lake-datalist"></datalist>
+        <input type="text" id="waterBody" placeholder="e.g. Snake River — Hells Canyon" list="wb-datalist" autocomplete="off" />
+        <datalist id="wb-datalist"></datalist>
       </div>
       <div class="field-wrap user-field">
         <span class="field-label">Species</span>
@@ -577,7 +625,7 @@
         <input type="number" id="depth" placeholder="e.g. 12" />
       </div>
       <div class="field-wrap auto-field">
-        <span class="field-label">Water Temp (°F) — Auto-filled via USGS</span>
+        <span class="field-label">Water Temp (°F) — Auto via USGS</span>
         <input type="number" id="waterTemp" placeholder="Auto-filled or enter manually" />
       </div>
 
@@ -610,18 +658,18 @@
         </select>
       </div>
       <div class="field-wrap auto-field">
-        <span class="field-label">Barometric Pressure (inHg) — Auto-filled</span>
+        <span class="field-label">Pressure (inHg) — Auto-filled</span>
         <input type="number" id="pressure" placeholder="Auto-filled or enter manually" step="0.01" />
       </div>
 
       <div class="section-label">Auto-Calculated</div>
 
       <div class="field-wrap auto-field">
-        <span class="field-label">Moon Phase — Auto-calculated from date</span>
-        <input type="text" id="moonPhase" placeholder="Set date above to calculate" readonly />
+        <span class="field-label">Moon Phase — from date</span>
+        <input type="text" id="moonPhase" placeholder="Set date above" readonly />
       </div>
       <div class="field-wrap auto-field">
-        <span class="field-label">Season — Auto-calculated from date</span>
+        <span class="field-label">Season — from date</span>
         <select id="season">
           <option value="">-- Auto-calculated --</option>
           <option>Spring</option><option>Summer</option><option>Fall</option><option>Winter</option>
@@ -645,14 +693,14 @@
     </div>
   </div>
 
-  <!-- LAKE PANE (Phase 4) -->
-  <div id="lake-pane" class="hidden">
-    <div id="lake-header-bar">
-      <span>🏞 Lakes &amp; Water Bodies</span>
-      <button onclick="openLakeForm()">+ Add Lake</button>
+  <!-- WATER BODY PANE -->
+  <div id="wb-pane" class="hidden">
+    <div id="wb-header-bar">
+      <span>💧 Bodies of Water</span>
+      <button onclick="openWbForm()">+ Add</button>
     </div>
-    <div id="lakes-list-wrap">
-      <div id="lakes-list" style="padding:8px;"></div>
+    <div id="wb-list-wrap">
+      <div id="wb-list" style="padding:4px;"></div>
     </div>
   </div>
 </div>
@@ -765,21 +813,31 @@ let editingId = null;
 let tempMarker = null;
 let clickedLatLng = null;
 let listOpen = false;
-let lakeOpen = false;
+let wbOpen = false;
 
-// Phase 4 state
-let allLakes = [];
-let lakeMarkers = {};
-let lakeOverlays = {};
-let editingLakeId = null;
-let lfSpecies = [];
-let pickingLakeLocation = false;
-let tempLakeMarker = null;
+// Water body state
+let allWaterBodies = [];
+let wbMarkers = {};      // pin markers keyed by wb id
+let wbShapes = {};       // drawn polyline/polygon layers keyed by wb id
+let editingWbId = null;
+let wfSpecies = [];
+let pickingWbLocation = false;
+let tempWbMarker = null;
+
+// Draw state
+let drawingMode = null;  // 'polyline' | 'polygon' | null
+let drawPoints = [];
+let drawPreviewLayer = null;
+let drawTargetWbId = null;  // which water body we're drawing for
+
+// Tile layer state
+let seaMapLayer = null;
+let seaMapActive = false;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SPECIES
 // ─────────────────────────────────────────────────────────────────────────────
-const DEFAULT_SPECIES = ["Largemouth Bass","Smallmouth Bass","Rainbow Trout","Brown Trout","Crappie","Bluegill","Walleye","Northern Pike","Catfish"];
+const DEFAULT_SPECIES = ["Largemouth Bass","Smallmouth Bass","Rainbow Trout","Brown Trout","Crappie","Bluegill","Walleye","Northern Pike","Catfish","Steelhead","Chinook Salmon","Coho Salmon"];
 
 function loadSpecies(selectVal) {
   let list = JSON.parse(localStorage.getItem("speciesList"));
@@ -864,18 +922,45 @@ document.getElementById("catchDate").addEventListener("change", function () {
 // ─────────────────────────────────────────────────────────────────────────────
 const map = L.map("map").setView([46.731, -117.179], 13);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap contributors"
+  attribution: "&copy; OpenStreetMap contributors", zIndex: 1
 }).addTo(map);
 
+// ── OpenSeaMap nautical/depth tile layer ──────────────────────────────────────
+function toggleSeaMapTile() {
+  const btn = document.getElementById("tile-toggle-btn");
+  if (seaMapActive) {
+    if (seaMapLayer) { map.removeLayer(seaMapLayer); seaMapLayer = null; }
+    seaMapActive = false;
+    btn.classList.remove("tile-active");
+    btn.textContent = "🌊 Depth Layer";
+  } else {
+    seaMapLayer = L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", {
+      attribution: "&copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>",
+      opacity: 0.85, zIndex: 3
+    }).addTo(map);
+    seaMapActive = true;
+    btn.classList.add("tile-active");
+    btn.textContent = "🌊 Depth Layer ON";
+  }
+}
+
+// ── Map click handler ─────────────────────────────────────────────────────────
 map.on("click", function (e) {
-  // If picking lake location for the lake form
-  if (pickingLakeLocation) {
-    document.getElementById("lf-lat").value = e.latlng.lat.toFixed(6);
-    document.getElementById("lf-lng").value = e.latlng.lng.toFixed(6);
-    if (tempLakeMarker) map.removeLayer(tempLakeMarker);
-    tempLakeMarker = L.marker(e.latlng, { icon: lakeIcon() }).addTo(map);
-    stopLakePick();
-    openLakeFormModal();
+  // Drawing mode: add a point
+  if (drawingMode) {
+    drawPoints.push(e.latlng);
+    updateDrawPreview();
+    return;
+  }
+
+  // Picking wb location for form
+  if (pickingWbLocation) {
+    document.getElementById("wf-lat").value = e.latlng.lat.toFixed(6);
+    document.getElementById("wf-lng").value = e.latlng.lng.toFixed(6);
+    if (tempWbMarker) map.removeLayer(tempWbMarker);
+    tempWbMarker = L.marker(e.latlng, { icon: wbIcon("River") }).addTo(map);
+    stopWbPick();
+    openWbFormModal();
     return;
   }
 
@@ -884,7 +969,7 @@ map.on("click", function (e) {
   const mapPanel = document.getElementById("map-filter-panel");
   if (mapPanel.classList.contains("open")) { mapPanel.classList.remove("open"); return; }
   if (listOpen) { toggleListView(); return; }
-  if (lakeOpen) { toggleLakePane(); return; }
+  if (wbOpen) { toggleWbPane(); return; }
 
   if (tempMarker) map.removeLayer(tempMarker);
   clickedLatLng = e.latlng;
@@ -897,6 +982,14 @@ map.on("click", function (e) {
   const statusEl = document.getElementById("autofill-status");
   statusEl.className = ""; statusEl.textContent = "";
   autoFillConditions(e.latlng.lat, e.latlng.lng);
+});
+
+// Double-click finishes drawing
+map.on("dblclick", function(e) {
+  if (drawingMode) {
+    e.originalEvent.preventDefault();
+    finishDraw();
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1108,7 +1201,7 @@ function toggleMoreInfo(btn, id) {
 // LIST VIEW TOGGLE
 // ─────────────────────────────────────────────────────────────────────────────
 function toggleListView() {
-  if (lakeOpen) { toggleLakePane(); }
+  if (wbOpen) toggleWbPane();
   listOpen = !listOpen;
   const btn = document.getElementById("view-toggle-btn");
   const listPane = document.getElementById("list-pane");
@@ -1126,7 +1219,7 @@ function toggleListView() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// RENDER LIST
+// RENDER CATCHES LIST
 // ─────────────────────────────────────────────────────────────────────────────
 function renderList(catches) {
   const container = document.getElementById("catches-list");
@@ -1141,7 +1234,7 @@ function renderList(catches) {
     const wind = (c.wind_speed != null || c.wind_direction)
       ? [c.wind_speed != null ? c.wind_speed + " mph" : null, c.wind_direction || null].filter(Boolean).join(" ") : null;
     const noData = '<span style="color:#c0392b;font-weight:600;font-size:11px;">No Data</span>';
-    const nd = (v, suffix) => (v == null || v === "") ? noData : (suffix ? v + suffix : v);
+    const ndl = (v, suffix) => (v == null || v === "") ? noData : (suffix ? v + suffix : v);
     const card = document.createElement("div");
     card.className = "catch-card";
     card.innerHTML = `
@@ -1158,14 +1251,14 @@ function renderList(catches) {
       <div class="card-detail" id="cd-${c.id}">
         <div class="detail-grid">
           <div class="detail-section">Catch Details</div>
-          <div>Size: ${nd(c.size_in, " in")}</div><div>Weight: ${nd(c.weight_lbs, " lbs")}</div>
-          <div>Bait: ${nd(c.bait)}</div><div>Rig: ${nd(c.rig)}</div>
-          <div>Retrieve: ${nd(c.retrieve)}</div><div>Water Temp: ${nd(c.water_temp_f, "°F")}</div>
-          <div>Depth: ${nd(c.depth_ft, " ft")}</div>
+          <div>Size: ${ndl(c.size_in, " in")}</div><div>Weight: ${ndl(c.weight_lbs, " lbs")}</div>
+          <div>Bait: ${ndl(c.bait)}</div><div>Rig: ${ndl(c.rig)}</div>
+          <div>Retrieve: ${ndl(c.retrieve)}</div><div>Water Temp: ${ndl(c.water_temp_f, "°F")}</div>
+          <div>Depth: ${ndl(c.depth_ft, " ft")}</div>
           <div class="detail-section">Conditions</div>
-          <div>Air Temp: ${nd(c.air_temp_f, "°F")}</div><div>Weather: ${nd(c.weather)}</div>
-          <div>Wind: ${nd(wind)}</div><div>Pressure: ${nd(c.pressure_inhg, " inHg")}</div>
-          <div>Moon: ${nd(c.moon_phase)}</div><div>Season: ${nd(c.season)}</div>
+          <div>Air Temp: ${ndl(c.air_temp_f, "°F")}</div><div>Weather: ${ndl(c.weather)}</div>
+          <div>Wind: ${ndl(wind)}</div><div>Pressure: ${ndl(c.pressure_inhg, " inHg")}</div>
+          <div>Moon: ${ndl(c.moon_phase)}</div><div>Season: ${ndl(c.season)}</div>
           <div class="detail-section">Location</div>
           <div style="grid-column:1/-1">Lat ${parseFloat(c.lat).toFixed(5)}, Lng ${parseFloat(c.lng).toFixed(5)}</div>
         </div>
@@ -1183,7 +1276,7 @@ function renderList(catches) {
 // ─────────────────────────────────────────────────────────────────────────────
 function buildFilterHTML() {
   return `
-    <div class="filter-field"><div class="filter-label">Water Body</div><input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" /></div>
+    <div class="filter-field"><div class="filter-label">Body of Water</div><input type="text" id="f-water" placeholder="Any" oninput="applyFilters()" /></div>
     <div class="filter-field"><div class="filter-label">Species</div><input type="text" id="f-species" placeholder="Any" oninput="applyFilters()" /></div>
     <div class="filter-field"><div class="filter-label">Username</div><input type="text" id="f-user" placeholder="Any" oninput="applyFilters()" /></div>
     <div class="filter-field"><div class="filter-label">Season</div>
@@ -1328,20 +1421,31 @@ async function loadCatches() {
 }
 
 // =============================================================================
-// PHASE 4 — LAKE DATA LAYER
+// WATER BODY DATA LAYER
 // =============================================================================
 
-// ── Lake icon (brown teardrop) ────────────────────────────────────────────────
-function lakeIcon() {
+// ── Type badge helper ──────────────────────────────────────────────────────────
+function typeBadge(type) {
+  if (!type) return "";
+  const cls = "wb-type-" + (type || "other").toLowerCase().replace(/\s+/g, "-");
+  return `<span class="wb-type-badge ${cls}">${type}</span>`;
+}
+
+// ── Water body icon ────────────────────────────────────────────────────────────
+function wbIcon(type) {
+  const emoji = { River: "🏞", Lake: "🏔", Reservoir: "💧", Stream: "〰", Bay: "⚓", Other: "📍" };
+  const e = emoji[type] || "💧";
+  const bg = { River: "#1a6688", Lake: "#2d6a35", Reservoir: "#5b2d8a", Stream: "#1a5c27", Bay: "#7a3d00", Other: "#5a3e1b" };
+  const color = bg[type] || "#2d6a35";
   return L.divIcon({
     className: "",
     html: `<div style="
       width:28px;height:28px;
-      background:#5a3e1b;border:2px solid #3b2710;
+      background:${color};border:2px solid rgba(0,0,0,0.35);
       border-radius:50% 50% 50% 0;transform:rotate(-45deg);
       display:flex;align-items:center;justify-content:center;
       box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-      <span style="transform:rotate(45deg);font-size:13px;line-height:1;">🏞</span>
+      <span style="transform:rotate(45deg);font-size:13px;line-height:1;">${e}</span>
     </div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 28],
@@ -1349,191 +1453,216 @@ function lakeIcon() {
   });
 }
 
-// ── Toggle lake pane ──────────────────────────────────────────────────────────
-function toggleLakePane() {
+// ── Shape style by type ────────────────────────────────────────────────────────
+function shapeStyle(type) {
+  const colors = { River: "#1a6688", Lake: "#2d6a35", Reservoir: "#5b2d8a", Stream: "#1a5c27", Bay: "#7a3d00", Other: "#5a3e1b" };
+  const color = colors[type] || "#2d6a35";
+  return { color, weight: 3, opacity: 0.8, fillColor: color, fillOpacity: 0.15, dashArray: type === "River" || type === "Stream" ? "6 4" : null };
+}
+
+// ── Toggle wb pane ─────────────────────────────────────────────────────────────
+function toggleWbPane() {
   if (listOpen) toggleListView();
-  lakeOpen = !lakeOpen;
-  const btn = document.getElementById("lake-toggle-btn");
-  const lakePane = document.getElementById("lake-pane");
+  wbOpen = !wbOpen;
+  const btn = document.getElementById("wb-toggle-btn");
+  const wbPane = document.getElementById("wb-pane");
   const mapPane = document.getElementById("map-pane");
   if (window.innerWidth <= 700) {
-    lakePane.classList.toggle("mobile-open", lakeOpen);
-    mapPane.classList.toggle("mobile-hidden", lakeOpen);
+    wbPane.classList.toggle("mobile-open", wbOpen);
+    mapPane.classList.toggle("mobile-hidden", wbOpen);
   } else {
-    lakePane.classList.toggle("hidden", !lakeOpen);
+    wbPane.classList.toggle("hidden", !wbOpen);
     setTimeout(() => map.invalidateSize(), 260);
   }
-  btn.textContent = lakeOpen ? "🗺 Map" : "🏞 Lakes";
-  btn.classList.toggle("active", lakeOpen);
-  if (lakeOpen) renderLakesList();
+  btn.textContent = wbOpen ? "🗺 Map" : "💧 Waters";
+  btn.classList.toggle("active", wbOpen);
+  if (wbOpen) renderWbList();
 }
 
-// ── Lake form open/close ──────────────────────────────────────────────────────
-function openLakeForm(lakeId) {
-  editingLakeId = lakeId || null;
-  lfSpecies = [];
+// ── Wb form open/close ────────────────────────────────────────────────────────
+function openWbForm(wbId) {
+  editingWbId = wbId || null;
+  wfSpecies = [];
 
-  // Clear form
-  ["lf-name","lf-lat","lf-lng","lf-depth-min","lf-depth-max","lf-overlay-url",
-   "lf-bnw-lat","lf-bnw-lng","lf-bse-lat","lf-bse-lng"].forEach(id => {
+  ["wf-name","wf-lat","wf-lng","wf-depth-min","wf-depth-max","wf-info-url","wf-parent"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
-  document.getElementById("lf-clarity").value = "";
-  document.getElementById("lf-structure").value = "";
-  document.getElementById("lf-species-tags").innerHTML = "";
-  const statusEl = document.getElementById("lf-status");
+  document.getElementById("wf-type").value = "";
+  document.getElementById("wf-clarity").value = "";
+  document.getElementById("wf-structure").value = "";
+  document.getElementById("wf-species-tags").innerHTML = "";
+  const statusEl = document.getElementById("wf-status");
   statusEl.style.display = "none";
 
-  if (lakeId) {
-    const lake = allLakes.find(l => l.id === lakeId);
-    if (lake) {
-      document.getElementById("lf-title").textContent = "✏️ Edit Lake";
-      document.getElementById("lf-name").value = lake.name || "";
-      document.getElementById("lf-lat").value = lake.lat ?? "";
-      document.getElementById("lf-lng").value = lake.lng ?? "";
-      document.getElementById("lf-clarity").value = lake.avg_clarity || "";
-      document.getElementById("lf-structure").value = lake.structure_notes || "";
-      document.getElementById("lf-overlay-url").value = lake.overlay_url || "";
-      if (lake.overlay_bounds) {
-        try {
-          const b = typeof lake.overlay_bounds === "string" ? JSON.parse(lake.overlay_bounds) : lake.overlay_bounds;
-          if (b && b.length === 2) {
-            document.getElementById("lf-bnw-lat").value = b[0][0] ?? "";
-            document.getElementById("lf-bnw-lng").value = b[0][1] ?? "";
-            document.getElementById("lf-bse-lat").value = b[1][0] ?? "";
-            document.getElementById("lf-bse-lng").value = b[1][1] ?? "";
-          }
-        } catch(e) {}
-      }
-      if (lake.depth_min != null) document.getElementById("lf-depth-min").value = lake.depth_min;
-      if (lake.depth_max != null) document.getElementById("lf-depth-max").value = lake.depth_max;
-      // Load species tags
-      lfSpecies = lake.species_list ? [...lake.species_list] : [];
-      renderLfTags();
+  if (wbId) {
+    const wb = allWaterBodies.find(w => w.id === wbId);
+    if (wb) {
+      document.getElementById("wf-title").textContent = "✏️ Edit Body of Water";
+      document.getElementById("wf-name").value = wb.name || "";
+      document.getElementById("wf-type").value = wb.type || "";
+      document.getElementById("wf-parent").value = wb.parent_name || "";
+      document.getElementById("wf-lat").value = wb.lat ?? "";
+      document.getElementById("wf-lng").value = wb.lng ?? "";
+      document.getElementById("wf-clarity").value = wb.avg_clarity || "";
+      document.getElementById("wf-structure").value = wb.structure_notes || "";
+      document.getElementById("wf-info-url").value = wb.info_url || "";
+      if (wb.depth_min != null) document.getElementById("wf-depth-min").value = wb.depth_min;
+      if (wb.depth_max != null) document.getElementById("wf-depth-max").value = wb.depth_max;
+      wfSpecies = wb.species_list ? [...wb.species_list] : [];
+      renderWfTags();
     }
   } else {
-    document.getElementById("lf-title").textContent = "🏞 Add Lake / Body of Water";
+    document.getElementById("wf-title").textContent = "💧 Add Body of Water";
   }
 
-  document.getElementById("lake-form-modal").style.display = "block";
-  document.getElementById("lake-overlay").style.display = "block";
+  document.getElementById("wb-form-modal").style.display = "block";
+  document.getElementById("wb-overlay").style.display = "block";
+  updateParentDatalist();
 }
 
-function openLakeFormModal() {
-  document.getElementById("lake-form-modal").style.display = "block";
-  document.getElementById("lake-overlay").style.display = "block";
+function openWbFormModal() {
+  document.getElementById("wb-form-modal").style.display = "block";
+  document.getElementById("wb-overlay").style.display = "block";
 }
 
-function closeLakeForm() {
-  document.getElementById("lake-form-modal").style.display = "none";
-  document.getElementById("lake-overlay").style.display = "none";
-  editingLakeId = null;
-  stopLakePick();
-  if (tempLakeMarker && !editingLakeId) { map.removeLayer(tempLakeMarker); tempLakeMarker = null; }
+function closeWbForm() {
+  document.getElementById("wb-form-modal").style.display = "none";
+  document.getElementById("wb-overlay").style.display = "none";
+  editingWbId = null;
+  stopWbPick();
+  if (tempWbMarker) { map.removeLayer(tempWbMarker); tempWbMarker = null; }
 }
 
-document.getElementById("lake-overlay").addEventListener("click", closeLakeForm);
+document.getElementById("wb-overlay").addEventListener("click", closeWbForm);
 
-// ── Pick-on-map for lake location ─────────────────────────────────────────────
-function startLakePick() {
-  document.getElementById("lake-form-modal").style.display = "none";
-  document.getElementById("lake-overlay").style.display = "none";
-  pickingLakeLocation = true;
+// ── Pick on map for wb ─────────────────────────────────────────────────────────
+function startWbPick() {
+  document.getElementById("wb-form-modal").style.display = "none";
+  document.getElementById("wb-overlay").style.display = "none";
+  pickingWbLocation = true;
   map.getContainer().style.cursor = "crosshair";
-  document.getElementById("lf-pick-btn").textContent = "📍 Click the map to set location…";
+  document.getElementById("wf-pick-btn").textContent = "📍 Click the map…";
 }
 
-function stopLakePick() {
-  pickingLakeLocation = false;
+function stopWbPick() {
+  pickingWbLocation = false;
   map.getContainer().style.cursor = "";
-  const btn = document.getElementById("lf-pick-btn");
+  const btn = document.getElementById("wf-pick-btn");
   if (btn) btn.textContent = "📍 Pick on Map";
 }
 
-// ── Species tags in lake form ─────────────────────────────────────────────────
-function renderLfTags() {
-  const container = document.getElementById("lf-species-tags");
+// ── Species tags in wb form ───────────────────────────────────────────────────
+function renderWfTags() {
+  const container = document.getElementById("wf-species-tags");
   container.innerHTML = "";
-  lfSpecies.forEach((s, i) => {
+  wfSpecies.forEach((s, i) => {
     const tag = document.createElement("span");
-    tag.className = "lf-tag";
+    tag.className = "wf-tag";
     tag.title = "Click to remove";
     tag.innerHTML = s + ' <span style="font-size:10px;opacity:0.7;">✕</span>';
-    tag.addEventListener("click", () => { lfSpecies.splice(i, 1); renderLfTags(); });
+    tag.addEventListener("click", () => { wfSpecies.splice(i, 1); renderWfTags(); });
     container.appendChild(tag);
   });
 }
 
-function addLfSpecies() {
-  const input = document.getElementById("lf-species-input");
+function addWfSpecies() {
+  const input = document.getElementById("wf-species-input");
   const val = input.value.trim();
   if (!val) return;
-  if (!lfSpecies.includes(val)) { lfSpecies.push(val); renderLfTags(); }
+  if (!wfSpecies.includes(val)) { wfSpecies.push(val); renderWfTags(); }
   input.value = "";
   input.focus();
 }
 
-document.getElementById("lf-species-input").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") { e.preventDefault(); addLfSpecies(); }
+document.getElementById("wf-species-input").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") { e.preventDefault(); addWfSpecies(); }
 });
 
-// ── Save lake ─────────────────────────────────────────────────────────────────
-async function saveLake() {
-  const name = document.getElementById("lf-name").value.trim();
-  if (!name) { alert("Lake name is required."); return; }
+// ── Parent datalist ───────────────────────────────────────────────────────────
+function updateParentDatalist() {
+  const dl = document.getElementById("wb-parent-datalist");
+  dl.innerHTML = "";
+  // Collect unique parent names and top-level names
+  const names = new Set();
+  allWaterBodies.forEach(wb => {
+    names.add(wb.name);
+    if (wb.parent_name) names.add(wb.parent_name);
+  });
+  names.forEach(n => { const opt = document.createElement("option"); opt.value = n; dl.appendChild(opt); });
+}
 
-  const lat = parseFloat(document.getElementById("lf-lat").value) || null;
-  const lng = parseFloat(document.getElementById("lf-lng").value) || null;
+// ── Wb datalist for catch form ────────────────────────────────────────────────
+function updateWbDatalist() {
+  const dl = document.getElementById("wb-datalist");
+  dl.innerHTML = "";
+  allWaterBodies.forEach(wb => {
+    const opt = document.createElement("option");
+    opt.value = wb.name;
+    dl.appendChild(opt);
+  });
+}
 
-  const nwLat = parseFloat(document.getElementById("lf-bnw-lat").value);
-  const nwLng = parseFloat(document.getElementById("lf-bnw-lng").value);
-  const seLat = parseFloat(document.getElementById("lf-bse-lat").value);
-  const seLng = parseFloat(document.getElementById("lf-bse-lng").value);
-  const overlayUrl = document.getElementById("lf-overlay-url").value.trim() || null;
-  const overlayBounds = (!isNaN(nwLat) && !isNaN(nwLng) && !isNaN(seLat) && !isNaN(seLng))
-    ? [[nwLat, nwLng], [seLat, seLng]] : null;
+// When user selects a water body in catch form, merge its species
+document.getElementById("waterBody").addEventListener("change", function() {
+  const val = this.value.trim();
+  const wb = allWaterBodies.find(w => w.name.toLowerCase() === val.toLowerCase());
+  if (wb && wb.species_list && wb.species_list.length > 0) {
+    let list = JSON.parse(localStorage.getItem("speciesList")) || DEFAULT_SPECIES;
+    let changed = false;
+    wb.species_list.forEach(s => { if (!list.includes(s)) { list.push(s); changed = true; } });
+    if (changed) { localStorage.setItem("speciesList", JSON.stringify(list)); loadSpecies(); }
+  }
+});
+
+// ── Save water body ───────────────────────────────────────────────────────────
+async function saveWaterBody() {
+  const name = document.getElementById("wf-name").value.trim();
+  if (!name) { alert("Name is required."); return; }
+
+  const lat = parseFloat(document.getElementById("wf-lat").value) || null;
+  const lng = parseFloat(document.getElementById("wf-lng").value) || null;
+  const parentName = document.getElementById("wf-parent").value.trim() || null;
 
   const data = {
     name,
-    lat,
-    lng,
-    avg_clarity: document.getElementById("lf-clarity").value || null,
-    structure_notes: document.getElementById("lf-structure").value.trim() || null,
-    overlay_url: overlayUrl,
-    overlay_bounds: overlayBounds,
-    depth_min: parseFloat(document.getElementById("lf-depth-min").value) || null,
-    depth_max: parseFloat(document.getElementById("lf-depth-max").value) || null,
-    species_list: lfSpecies.length > 0 ? lfSpecies : null
+    type: document.getElementById("wf-type").value || null,
+    parent_name: parentName,
+    lat, lng,
+    avg_clarity: document.getElementById("wf-clarity").value || null,
+    structure_notes: document.getElementById("wf-structure").value.trim() || null,
+    info_url: document.getElementById("wf-info-url").value.trim() || null,
+    depth_min: parseFloat(document.getElementById("wf-depth-min").value) || null,
+    depth_max: parseFloat(document.getElementById("wf-depth-max").value) || null,
+    species_list: wfSpecies.length > 0 ? wfSpecies : null
   };
 
-  const saveBtn = document.getElementById("lf-save-btn");
-  const statusEl = document.getElementById("lf-status");
+  const saveBtn = document.getElementById("wf-save-btn");
+  const statusEl = document.getElementById("wf-status");
   saveBtn.disabled = true;
   statusEl.style.display = "block";
   statusEl.style.background = "#fff9e6"; statusEl.style.borderColor = "#f9c74f"; statusEl.style.color = "#8a6800";
   statusEl.textContent = "Saving…";
 
   try {
-    if (editingLakeId) {
-      const result = await dbFetch("lakes?id=eq." + editingLakeId, "PATCH", data);
-      const updated = Array.isArray(result) && result[0] ? result[0] : { ...allLakes.find(l => l.id === editingLakeId), ...data };
-      const idx = allLakes.findIndex(l => l.id === editingLakeId);
-      if (idx !== -1) allLakes[idx] = updated;
-      updateLakeMarker(updated);
+    if (editingWbId) {
+      const result = await dbFetch("lakes?id=eq." + editingWbId, "PATCH", data);
+      const updated = Array.isArray(result) && result[0] ? result[0] : { ...allWaterBodies.find(w => w.id === editingWbId), ...data };
+      const idx = allWaterBodies.findIndex(w => w.id === editingWbId);
+      if (idx !== -1) allWaterBodies[idx] = updated;
+      updateWbMapLayer(updated);
     } else {
       const result = await dbFetch("lakes", "POST", data);
       const saved = Array.isArray(result) && result[0] ? result[0] : { ...data, id: "tmp-" + Date.now() };
-      allLakes.unshift(saved);
-      addLakeMarker(saved);
+      allWaterBodies.unshift(saved);
+      addWbMapLayer(saved);
     }
-
-    updateLakeDatalist();
+    updateWbDatalist();
     statusEl.style.background = "#e8f7ec"; statusEl.style.borderColor = "#4a9455"; statusEl.style.color = "#1a5c27";
     statusEl.textContent = "✅ Saved!";
-    if (lakeOpen) renderLakesList();
-    setTimeout(closeLakeForm, 600);
+    if (wbOpen) renderWbList();
+    setTimeout(closeWbForm, 600);
   } catch (err) {
-    console.error("Lake save failed:", err);
+    console.error("Water body save failed:", err);
     statusEl.style.background = "#fde8e8"; statusEl.style.borderColor = "#c0392b"; statusEl.style.color = "#7a1010";
     statusEl.textContent = "❌ Save failed — check console.";
   } finally {
@@ -1541,207 +1670,327 @@ async function saveLake() {
   }
 }
 
-// ── Delete lake ───────────────────────────────────────────────────────────────
-async function deleteLake(id) {
-  if (!confirm("Delete this lake? This cannot be undone.")) return;
+// ── Delete water body ─────────────────────────────────────────────────────────
+async function deleteWaterBody(id) {
+  if (!confirm("Delete this body of water? This cannot be undone.")) return;
   try {
     await dbFetch("lakes?id=eq." + id, "DELETE");
-    // Remove marker
-    if (lakeMarkers[id]) { map.removeLayer(lakeMarkers[id]); delete lakeMarkers[id]; }
-    // Remove overlay
-    if (lakeOverlays[id]) { map.removeLayer(lakeOverlays[id]); delete lakeOverlays[id]; }
-    allLakes = allLakes.filter(l => l.id !== id);
-    updateLakeDatalist();
-    if (lakeOpen) renderLakesList();
-  } catch (err) { console.error("Lake delete failed:", err); alert("Delete failed — check console."); }
+    if (wbMarkers[id]) { map.removeLayer(wbMarkers[id]); delete wbMarkers[id]; }
+    if (wbShapes[id]) { map.removeLayer(wbShapes[id]); delete wbShapes[id]; }
+    allWaterBodies = allWaterBodies.filter(w => w.id !== id);
+    updateWbDatalist();
+    if (wbOpen) renderWbList();
+  } catch (err) { console.error("Delete failed:", err); alert("Delete failed — check console."); }
 }
 
-// ── Add / update lake map marker ──────────────────────────────────────────────
-function addLakeMarker(lake) {
-  if (lake.lat == null || lake.lng == null) return;
-  const m = L.marker([lake.lat, lake.lng], { icon: lakeIcon(), zIndexOffset: -100 })
-    .addTo(map)
-    .bindPopup(buildLakePopup(lake));
-  lakeMarkers[lake.id] = m;
-  // Add overlay if present
-  if (lake.overlay_url && lake.overlay_bounds) {
-    addLakeOverlay(lake);
-  }
-}
-
-function updateLakeMarker(lake) {
-  if (lakeMarkers[lake.id]) {
-    map.removeLayer(lakeMarkers[lake.id]);
-    delete lakeMarkers[lake.id];
-  }
-  if (lakeOverlays[lake.id]) {
-    map.removeLayer(lakeOverlays[lake.id]);
-    delete lakeOverlays[lake.id];
-  }
-  addLakeMarker(lake);
-}
-
-// ── Bathymetric overlay ───────────────────────────────────────────────────────
-function addLakeOverlay(lake) {
+// ── Delete drawn shape only ───────────────────────────────────────────────────
+async function deleteWbShape(id) {
+  if (!confirm("Remove the drawn shape for this water body? The entry will remain.")) return;
   try {
-    const bounds = typeof lake.overlay_bounds === "string"
-      ? JSON.parse(lake.overlay_bounds) : lake.overlay_bounds;
-    if (!bounds || bounds.length < 2) return;
-    // Leaflet ImageOverlay: bounds = [[southWest lat,lng], [northEast lat,lng]]
-    // We store as [[NW lat,lng],[SE lat,lng]], convert:
-    const sw = [bounds[1][0], bounds[0][1]];
-    const ne = [bounds[0][0], bounds[1][1]];
-    const overlay = L.imageOverlay(lake.overlay_url, [sw, ne], {
-      opacity: 0.65,
-      interactive: false,
-      className: "lake-bathy-overlay"
-    }).addTo(map);
-    lakeOverlays[lake.id] = overlay;
-  } catch(e) { console.warn("Could not add lake overlay:", e); }
+    await dbFetch("lakes?id=eq." + id, "PATCH", { shape_geojson: null });
+    if (wbShapes[id]) { map.removeLayer(wbShapes[id]); delete wbShapes[id]; }
+    const wb = allWaterBodies.find(w => w.id === id);
+    if (wb) wb.shape_geojson = null;
+    if (wbOpen) renderWbList();
+  } catch (err) { console.error("Shape delete failed:", err); }
 }
 
-// ── Lake popup ────────────────────────────────────────────────────────────────
-function buildLakePopup(lake) {
-  const species = lake.species_list && lake.species_list.length > 0
-    ? lake.species_list.map(s => `<span class="lake-species-tag">${s}</span>`).join(" ")
+// ── Map layers ────────────────────────────────────────────────────────────────
+function addWbMapLayer(wb) {
+  // Pin marker
+  if (wb.lat != null && wb.lng != null) {
+    const m = L.marker([wb.lat, wb.lng], { icon: wbIcon(wb.type), zIndexOffset: -50 })
+      .addTo(map)
+      .bindPopup(buildWbPopup(wb));
+    wbMarkers[wb.id] = m;
+  }
+  // Shape
+  if (wb.shape_geojson) {
+    addWbShape(wb);
+  }
+}
+
+function updateWbMapLayer(wb) {
+  if (wbMarkers[wb.id]) { map.removeLayer(wbMarkers[wb.id]); delete wbMarkers[wb.id]; }
+  if (wbShapes[wb.id]) { map.removeLayer(wbShapes[wb.id]); delete wbShapes[wb.id]; }
+  addWbMapLayer(wb);
+}
+
+function addWbShape(wb) {
+  try {
+    const geojson = typeof wb.shape_geojson === "string" ? JSON.parse(wb.shape_geojson) : wb.shape_geojson;
+    const layer = L.geoJSON(geojson, {
+      style: shapeStyle(wb.type),
+      className: "wb-shape",
+      onEachFeature: (feature, layer) => {
+        layer.bindPopup(buildWbPopup(wb));
+      }
+    }).addTo(map);
+    wbShapes[wb.id] = layer;
+  } catch(e) { console.warn("Could not render shape for", wb.name, e); }
+}
+
+// ── Water body popup ──────────────────────────────────────────────────────────
+function buildWbPopup(wb) {
+  const species = wb.species_list && wb.species_list.length > 0
+    ? wb.species_list.map(s => `<span class="wb-species-tag">${s}</span>`).join(" ")
     : '<span style="color:#c0392b;font-size:11px;font-weight:600;">None listed</span>';
 
-  const depthStr = (lake.depth_min != null && lake.depth_max != null)
-    ? `${lake.depth_min}–${lake.depth_max} ft`
-    : (lake.depth_max != null ? `Up to ${lake.depth_max} ft` : "—");
+  const depthStr = (wb.depth_min != null && wb.depth_max != null)
+    ? `${wb.depth_min}–${wb.depth_max} ft`
+    : (wb.depth_max != null ? `Up to ${wb.depth_max} ft` : null);
+
+  const parentStr = wb.parent_name ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Part of: <strong>${wb.parent_name}</strong></div>` : "";
 
   return `
-    <div style="font-family:'Cabin',sans-serif;min-width:230px;max-width:280px;">
-      <div style="font-size:15px;font-weight:700;color:#3b2710;margin-bottom:4px;">🏞 ${lake.name}</div>
-      <div style="font-size:12px;color:#5a6b5c;margin-bottom:8px;">
-        ${lake.avg_clarity ? "💧 Clarity: <strong>" + lake.avg_clarity + "</strong>" : ""}
-        ${lake.avg_clarity && depthStr !== "—" ? " &nbsp;|&nbsp; " : ""}
-        ${depthStr !== "—" ? "⬇️ Depth: <strong>" + depthStr + "</strong>" : ""}
+    <div style="font-family:'Cabin',sans-serif;min-width:230px;max-width:290px;">
+      <div style="font-size:15px;font-weight:700;color:#3b2710;margin-bottom:3px;">💧 ${wb.name}</div>
+      ${wb.type ? `<div style="margin-bottom:4px;">${typeBadge(wb.type)}</div>` : ""}
+      ${parentStr}
+      <div style="font-size:12px;color:#5a6b5c;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;">
+        ${wb.avg_clarity ? `<span>💧 ${wb.avg_clarity}</span>` : ""}
+        ${depthStr ? `<span>⬇️ ${depthStr}</span>` : ""}
       </div>
-      ${lake.structure_notes ? `<div style="font-size:12px;color:#3b2710;margin-bottom:8px;line-height:1.5;background:#fef9f0;padding:6px 8px;border-radius:4px;border-left:3px solid #5a3e1b;">${lake.structure_notes}</div>` : ""}
+      ${wb.structure_notes ? `<div style="font-size:12px;color:#3b2710;margin-bottom:8px;line-height:1.5;background:#fef9f0;padding:6px 8px;border-radius:4px;border-left:3px solid #5a3e1b;">${wb.structure_notes}</div>` : ""}
       <div style="font-size:10px;font-weight:700;color:#5a6b5c;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Known Species</div>
-      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;">${species}</div>
-      ${lake.overlay_url ? `<div style="font-size:11px;color:var(--water);margin-bottom:8px;">🗺 Bathymetric overlay active</div>` : ""}
-      <div style="display:flex;gap:5px;">
-        <button class="popup-button" onclick="editCatch_lake('${lake.id}')" style="background:#fef3e2;color:#7a4a00;border-color:#e8c88a;flex:1;">✏️ Edit Lake</button>
-        <button class="popup-button" onclick="deleteLake('${lake.id}')" style="background:#fde8e8;color:#c0392b;border-color:#f5b8b8;">🗑</button>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px;">${species}</div>
+      ${wb.info_url ? `<div style="margin-bottom:8px;"><a href="${wb.info_url}" target="_blank" rel="noopener" style="color:var(--water);font-size:12px;font-weight:600;">🔗 External Info / Fish & Game Page</a></div>` : ""}
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        <button class="popup-button" onclick="openWbForm('${wb.id}')" style="background:#fef3e2;color:#7a4a00;border-color:#e8c88a;flex:1;">✏️ Edit</button>
+        <button class="popup-button" onclick="deleteWaterBody('${wb.id}')" style="background:#fde8e8;color:#c0392b;border-color:#f5b8b8;">🗑</button>
       </div>
     </div>`;
 }
 
-// Rename to avoid collision
-function editCatch_lake(id) { openLakeForm(id); }
-
-// ── Render lakes list ─────────────────────────────────────────────────────────
-function renderLakesList() {
-  const container = document.getElementById("lakes-list");
+// ── Render water bodies list ──────────────────────────────────────────────────
+function renderWbList() {
+  const container = document.getElementById("wb-list");
   container.innerHTML = "";
 
-  if (!allLakes.length) {
+  if (!allWaterBodies.length) {
     container.innerHTML = `
-      <div style="padding:16px 4px;text-align:center;color:var(--text-muted);">
-        <div style="font-size:28px;margin-bottom:8px;">🏞</div>
-        <div style="font-size:13px;font-weight:600;">No lakes added yet.</div>
-        <div style="font-size:12px;margin-top:4px;">Click <strong>+ Add Lake</strong> above or tap the map after clicking Add Lake to pin a location.</div>
+      <div style="padding:20px 4px;text-align:center;color:var(--text-muted);">
+        <div style="font-size:32px;margin-bottom:8px;">💧</div>
+        <div style="font-size:13px;font-weight:600;">No bodies of water added yet.</div>
+        <div style="font-size:12px;margin-top:4px;">Click <strong>+ Add</strong> above to get started.<br>Use "River Name — Reach" for river segments.</div>
       </div>`;
     return;
   }
 
-  allLakes.forEach(lake => {
-    const depthStr = (lake.depth_min != null && lake.depth_max != null)
-      ? `${lake.depth_min}–${lake.depth_max} ft`
-      : (lake.depth_max != null ? `Up to ${lake.depth_max} ft` : null);
+  // Group by parent_name (or standalone)
+  const groups = {}; // key: parent_name or "__standalone__"
+  const order = [];
 
-    const subParts = [];
-    if (lake.avg_clarity) subParts.push("💧 " + lake.avg_clarity);
-    if (depthStr) subParts.push("⬇️ " + depthStr);
-    if (lake.species_list && lake.species_list.length) subParts.push("🐟 " + lake.species_list.length + " species");
+  allWaterBodies.forEach(wb => {
+    const key = wb.parent_name ? wb.parent_name : "__" + wb.name;
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(wb);
+  });
 
-    const card = document.createElement("div");
-    card.className = "lake-card";
-    card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div style="flex:1;min-width:0;">
-          <div class="lake-card-title">${lake.name} ${lake.overlay_url ? '<span class="overlay-badge">Overlay</span>' : ''}</div>
-          ${subParts.length ? `<div class="lake-card-sub">${subParts.join(" &nbsp;|&nbsp; ")}</div>` : ""}
+  order.forEach(key => {
+    const items = groups[key];
+    const isGroup = !key.startsWith("__");
+
+    if (isGroup) {
+      // Group header
+      const header = document.createElement("div");
+      header.className = "wb-group-header";
+      header.innerHTML = `🏞 ${key} <span class="wb-count">${items.length} segment${items.length !== 1 ? "s" : ""}</span>`;
+      container.appendChild(header);
+    }
+
+    items.forEach(wb => {
+      const depthStr = (wb.depth_min != null && wb.depth_max != null)
+        ? `${wb.depth_min}–${wb.depth_max} ft`
+        : (wb.depth_max != null ? `Up to ${wb.depth_max} ft` : null);
+
+      const subParts = [];
+      if (wb.type) subParts.push(wb.type);
+      if (wb.avg_clarity) subParts.push("💧 " + wb.avg_clarity);
+      if (depthStr) subParts.push("⬇️ " + depthStr);
+      if (wb.species_list && wb.species_list.length) subParts.push("🐟 " + wb.species_list.length);
+
+      const hasShape = !!wbShapes[wb.id];
+
+      const card = document.createElement("div");
+      card.className = "wb-card" + (isGroup ? " is-segment" : "");
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div class="wb-card-title">
+              ${wb.name}
+              ${wb.type ? typeBadge(wb.type) : ""}
+              ${wb.parent_name ? `<span class="wb-segment-badge">segment</span>` : ""}
+            </div>
+            ${subParts.length ? `<div class="wb-card-sub">${subParts.join(" · ")}</div>` : ""}
+          </div>
         </div>
-      </div>
-      <div class="lake-card-actions">
-        ${lake.lat != null ? `<button class="btn-lake-fly" onclick="event.stopPropagation();flyToLake('${lake.id}')">🗺 Fly To</button>` : ""}
-        <button class="btn-lake-edit" onclick="event.stopPropagation();openLakeForm('${lake.id}')">✏️ Edit</button>
-        <button class="btn-lake-del" onclick="event.stopPropagation();deleteLake('${lake.id}')">Delete</button>
-      </div>
-      <div class="lake-detail" id="ld-${lake.id}">
-        ${lake.structure_notes ? `<div class="lake-detail-label">Structure Notes</div><div style="font-size:12px;line-height:1.6;color:var(--text);">${lake.structure_notes}</div>` : ""}
-        ${lake.species_list && lake.species_list.length ? `
-          <div class="lake-detail-label">Known Species</div>
-          <div class="lake-species-tags">${lake.species_list.map(s => `<span class="lake-species-tag">${s}</span>`).join("")}</div>
-        ` : ""}
-        ${lake.lat != null ? `<div class="lake-detail-label">Coordinates</div><div style="font-size:12px;">${parseFloat(lake.lat).toFixed(5)}, ${parseFloat(lake.lng).toFixed(5)}</div>` : ""}
-        ${lake.overlay_url ? `<div class="lake-detail-label">Bathymetric Overlay</div><div style="font-size:12px;word-break:break-all;color:var(--water);">${lake.overlay_url}</div>` : ""}
-      </div>`;
+        <div class="wb-card-actions">
+          ${wb.lat != null ? `<button class="btn-wb-fly" onclick="event.stopPropagation();flyToWb('${wb.id}')">🗺 Fly To</button>` : ""}
+          <button class="btn-wb-edit" onclick="event.stopPropagation();openWbForm('${wb.id}')">✏️ Edit</button>
+          <button class="btn-wb-draw" onclick="event.stopPropagation();startDrawForWb('${wb.id}', '${(wb.type||'River')}', '${wb.name.replace(/'/g,"\\'")}')">
+            ${hasShape ? "✏️ Redraw" : "🖊 Draw Shape"}
+          </button>
+          ${hasShape ? `<button class="btn-wb-shape-del" onclick="event.stopPropagation();deleteWbShape('${wb.id}')">Remove Shape</button>` : ""}
+          <button class="btn-wb-del" onclick="event.stopPropagation();deleteWaterBody('${wb.id}')">Delete</button>
+        </div>
+        <div class="wb-detail" id="wbd-${wb.id}">
+          ${wb.structure_notes ? `<div class="wb-detail-label">Structure / Access Notes</div><div style="font-size:12px;line-height:1.6;color:var(--text);">${wb.structure_notes}</div>` : ""}
+          ${wb.species_list && wb.species_list.length ? `
+            <div class="wb-detail-label">Known Species</div>
+            <div class="wb-species-tags">${wb.species_list.map(s => `<span class="wb-species-tag">${s}</span>`).join("")}</div>
+          ` : ""}
+          ${wb.info_url ? `<div class="wb-detail-label">External Info</div><a href="${wb.info_url}" target="_blank" rel="noopener" style="color:var(--water);font-size:12px;font-weight:600;word-break:break-all;">🔗 ${wb.info_url}</a>` : ""}
+          ${wb.lat != null ? `<div class="wb-detail-label">Reference Pin</div><div style="font-size:12px;">${parseFloat(wb.lat).toFixed(5)}, ${parseFloat(wb.lng).toFixed(5)}</div>` : ""}
+          ${hasShape ? `<div class="wb-detail-label">Shape</div><div style="font-size:12px;color:var(--water);">✅ Shape drawn on map</div>` : ""}
+        </div>`;
 
-    card.addEventListener("click", () => {
-      document.getElementById("ld-" + lake.id).classList.toggle("open");
-      card.classList.toggle("expanded");
+      card.addEventListener("click", () => {
+        document.getElementById("wbd-" + wb.id).classList.toggle("open");
+        card.classList.toggle("expanded");
+      });
+      container.appendChild(card);
     });
-    container.appendChild(card);
   });
 }
 
-// ── Fly to lake on map ────────────────────────────────────────────────────────
-function flyToLake(id) {
-  const lake = allLakes.find(l => l.id === id);
-  if (!lake || lake.lat == null) return;
-  // Close lake pane on mobile
+// ── Fly to water body ─────────────────────────────────────────────────────────
+function flyToWb(id) {
+  const wb = allWaterBodies.find(w => w.id === id);
+  if (!wb) return;
   if (window.innerWidth <= 700) {
-    document.getElementById("lake-pane").classList.remove("mobile-open");
+    document.getElementById("wb-pane").classList.remove("mobile-open");
     document.getElementById("map-pane").classList.remove("mobile-hidden");
-    document.getElementById("lake-toggle-btn").textContent = "🏞 Lakes";
-    document.getElementById("lake-toggle-btn").classList.remove("active");
-    lakeOpen = false;
+    document.getElementById("wb-toggle-btn").textContent = "💧 Waters";
+    document.getElementById("wb-toggle-btn").classList.remove("active");
+    wbOpen = false;
   }
-  map.flyTo([lake.lat, lake.lng], 13, { duration: 1.2 });
-  setTimeout(() => { if (lakeMarkers[id]) lakeMarkers[id].openPopup(); }, 1400);
+  // Fly to shape bounds or pin
+  if (wbShapes[id]) {
+    const bounds = wbShapes[id].getBounds();
+    if (bounds.isValid()) { map.flyToBounds(bounds, { padding: [40, 40], duration: 1.2 }); return; }
+  }
+  if (wb.lat != null) {
+    map.flyTo([wb.lat, wb.lng], 13, { duration: 1.2 });
+    setTimeout(() => { if (wbMarkers[id]) wbMarkers[id].openPopup(); }, 1400);
+  }
 }
 
-// ── Datalist (autocomplete water body in catch form) ──────────────────────────
-function updateLakeDatalist() {
-  const dl = document.getElementById("lake-datalist");
-  dl.innerHTML = "";
-  allLakes.forEach(lake => {
-    const opt = document.createElement("option");
-    opt.value = lake.name;
-    dl.appendChild(opt);
-  });
+// =============================================================================
+// DRAW SHAPE ON MAP
+// =============================================================================
+
+function startDrawForWb(wbId, type, name) {
+  // Close pane on mobile
+  if (window.innerWidth <= 700) {
+    document.getElementById("wb-pane").classList.remove("mobile-open");
+    document.getElementById("map-pane").classList.remove("mobile-hidden");
+    document.getElementById("wb-toggle-btn").textContent = "💧 Waters";
+    document.getElementById("wb-toggle-btn").classList.remove("active");
+    wbOpen = false;
+  }
+
+  drawTargetWbId = wbId;
+  const wb = allWaterBodies.find(w => w.id === wbId);
+  drawingMode = (wb && (wb.type === "Lake" || wb.type === "Reservoir" || wb.type === "Bay")) ? "polygon" : "polyline";
+  drawPoints = [];
+
+  // Remove existing preview
+  if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  // Remove old shape temporarily while drawing
+  if (wbShapes[wbId]) { map.removeLayer(wbShapes[wbId]); delete wbShapes[wbId]; }
+
+  map.getContainer().style.cursor = "crosshair";
+  map.doubleClickZoom.disable();
+
+  const banner = document.getElementById("draw-banner");
+  const bannerText = document.getElementById("draw-banner-text");
+  const typeLabel = drawingMode === "polygon" ? "polygon (lake/reservoir)" : "line (river/stream reach)";
+  bannerText.textContent = `Drawing ${name} — Click to add points. Double-click or "Finish" when done.`;
+  banner.classList.add("active");
 }
 
-// When user selects a lake name in catch form, auto-suggest species if none picked
-document.getElementById("waterBody").addEventListener("change", function() {
-  const val = this.value.trim();
-  const lake = allLakes.find(l => l.name.toLowerCase() === val.toLowerCase());
-  if (lake && lake.species_list && lake.species_list.length > 0) {
-    // Merge lake species into local species list
-    let list = JSON.parse(localStorage.getItem("speciesList")) || DEFAULT_SPECIES;
-    let changed = false;
-    lake.species_list.forEach(s => { if (!list.includes(s)) { list.push(s); changed = true; } });
-    if (changed) { localStorage.setItem("speciesList", JSON.stringify(list)); loadSpecies(); }
-  }
-});
+function updateDrawPreview() {
+  if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  if (drawPoints.length < 1) return;
 
-// ── Load lakes ────────────────────────────────────────────────────────────────
-async function loadLakes() {
+  const style = drawingMode === "polygon"
+    ? { color: "#1a56c4", weight: 2, opacity: 0.8, fillColor: "#1a56c4", fillOpacity: 0.1, dashArray: "5 4" }
+    : { color: "#1a56c4", weight: 3, opacity: 0.85, dashArray: "6 4" };
+
+  if (drawingMode === "polygon" && drawPoints.length >= 3) {
+    drawPreviewLayer = L.polygon(drawPoints, style).addTo(map);
+  } else {
+    drawPreviewLayer = L.polyline(drawPoints, style).addTo(map);
+  }
+}
+
+async function finishDraw() {
+  if (drawPoints.length < 2) {
+    alert("Add at least 2 points to create a shape.");
+    return;
+  }
+
+  const wbId = drawTargetWbId;
+  const wb = allWaterBodies.find(w => w.id === wbId);
+  if (!wb) { cancelDraw(); return; }
+
+  // Build GeoJSON
+  let geojson;
+  if (drawingMode === "polygon" && drawPoints.length >= 3) {
+    const coords = drawPoints.map(p => [p.lng, p.lat]);
+    coords.push(coords[0]); // close ring
+    geojson = { type: "Feature", geometry: { type: "Polygon", coordinates: [coords] }, properties: {} };
+  } else {
+    const coords = drawPoints.map(p => [p.lng, p.lat]);
+    geojson = { type: "Feature", geometry: { type: "LineString", coordinates: coords }, properties: {} };
+  }
+
+  // Clean up draw state
+  if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  map.getContainer().style.cursor = "";
+  map.doubleClickZoom.enable();
+  drawingMode = null;
+  drawPoints = [];
+  document.getElementById("draw-banner").classList.remove("active");
+
+  // Save to Supabase
   try {
-    const lakes = await dbFetch("lakes?select=*&order=name.asc");
-    allLakes = lakes || [];
-    console.log("✅ Lakes loaded:", allLakes.length);
-    allLakes.forEach(lake => addLakeMarker(lake));
-    updateLakeDatalist();
-  } catch (err) {
-    console.error("❌ Failed to load lakes. Check that the lakes table exists and has the required columns (lat, lng, depth_min, depth_max, species_list):", err);
-    allLakes = [];
-    // Don't re-throw — let the rest of the app work fine
+    await dbFetch("lakes?id=eq." + wbId, "PATCH", { shape_geojson: JSON.stringify(geojson) });
+    wb.shape_geojson = geojson;
+    addWbShape(wb);
+    if (wbOpen) renderWbList();
+  } catch(err) {
+    console.error("Shape save failed:", err);
+    alert("Shape could not be saved — check console.");
   }
+}
+
+function cancelDraw() {
+  if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  map.getContainer().style.cursor = "";
+  map.doubleClickZoom.enable();
+  // Restore shape if it existed
+  const wb = allWaterBodies.find(w => w.id === drawTargetWbId);
+  if (wb && wb.shape_geojson) addWbShape(wb);
+  drawingMode = null;
+  drawPoints = [];
+  drawTargetWbId = null;
+  document.getElementById("draw-banner").classList.remove("active");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOAD WATER BODIES
+// ─────────────────────────────────────────────────────────────────────────────
+async function loadWaterBodies() {
+  try {
+    // Load from existing 'lakes' table — new columns (type, parent_name, info_url, shape_geojson)
+    // will be ignored gracefully if not yet added to Supabase schema
+    const data = await dbFetch("lakes?select=*&order=name.asc");
+    allWaterBodies = data || [];
+    allWaterBodies.forEach(wb => addWbMapLayer(wb));
+    updateWbDatalist();
+  } catch (err) { console.error("Failed to load water bodies:", err); }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1751,7 +2000,7 @@ initFilters();
 loadSpecies();
 checkUsername();
 loadCatches();
-loadLakes();
+loadWaterBodies();
 
 </script>
 </body>
