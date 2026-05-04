@@ -403,6 +403,7 @@
     #draw-banner button:hover { background: rgba(255,255,255,0.4); }
     #draw-banner button.finish { background: #27ae60; border-color: #27ae60; }
     #draw-banner button.cancel-draw { background: rgba(192,57,43,0.7); border-color: rgba(192,57,43,0.5); }
+    #draw-banner button.undo-draw { background: rgba(243,156,18,0.7); border-color: rgba(243,156,18,0.5); }
     #draw-point-count {
       background: rgba(255,255,255,0.2); border-radius: 10px;
       padding: 2px 8px; font-size: 11px;
@@ -452,6 +453,32 @@
     .wf-save:hover { background: var(--brown-dark); }
     .wf-save:disabled { background: #aaa; cursor: not-allowed; }
     .wf-cancel { background: var(--tan-dark); color: var(--text); }
+
+    /* Draw-in-form boundary section */
+    .wf-boundary-box {
+      background: #f0f6ff; border: 1.5px dashed #5a8fd8;
+      border-radius: 6px; padding: 10px 12px; margin-top: 4px;
+    }
+    .wf-boundary-status {
+      font-size: 12px; color: #1a56c4; font-weight: 600; margin-bottom: 6px;
+    }
+    .wf-boundary-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .wf-boundary-btns button {
+      padding: 5px 10px; border-radius: 4px; font-size: 12px; font-family: 'Cabin', sans-serif;
+      font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-start-draw { background: #1a56c4; color: white; }
+    .btn-start-draw:hover { background: #1240a0; }
+    .btn-clear-draw { background: #fde8e8; color: #c0392b; }
+    .btn-clear-draw:hover { background: #c0392b; color: white; }
+
+    /* Draw vertex markers */
+    .draw-vertex-icon {
+      width: 10px; height: 10px; background: #1a56c4; border: 2px solid white;
+      border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+      cursor: grab;
+    }
+    .draw-vertex-icon:active { cursor: grabbing; }
 
     .wb-pin-icon { width: 28px; height: 28px; }
     .leaflet-interactive.wb-shape { cursor: pointer; }
@@ -513,9 +540,25 @@
     <span class="wf-sub">Group related segments under a shared parent name. Leave blank for standalone water bodies.</span>
   </div>
 
+  <!-- ── Boundary Drawing (inline in form) ── -->
   <div class="wf-field">
+    <span class="wf-label">Boundary Polygon <span style="font-weight:400;color:#aaa;">(optional)</span></span>
+    <div class="wf-boundary-box">
+      <div class="wf-boundary-status" id="wf-boundary-status">No boundary drawn yet.</div>
+      <div class="wf-boundary-btns">
+        <button class="btn-start-draw" id="wf-draw-btn" onclick="startInlineDrawFromForm()">🖊 Draw on Map</button>
+        <button class="btn-clear-draw" id="wf-clear-draw-btn" onclick="clearInlineDraw()" style="display:none;">✕ Clear</button>
+      </div>
+      <div style="font-size:10px;color:#666;margin-top:6px;line-height:1.5;">
+        Click the map to add polygon points. Drag any point to adjust. Double-click or press Finish to close.
+      </div>
+    </div>
+  </div>
+
+  <!-- Pin location (auto-set to polygon centroid when boundary is drawn) -->
+  <div class="wf-field" id="wf-pin-field">
     <span class="wf-label">Pin Location <span style="font-weight:400;color:#aaa;">(reference point)</span></span>
-    <span class="wf-sub">Click "Pick on Map" to drop a reference pin, or draw a polygon boundary on the map for full coverage.</span>
+    <span class="wf-sub">Auto-set to polygon centroid, or pick manually if no boundary drawn.</span>
     <div style="display:flex;gap:6px;margin-top:4px;">
       <input type="number" id="wf-lat" placeholder="Latitude" step="0.00001" style="flex:1;" />
       <input type="number" id="wf-lng" placeholder="Longitude" step="0.00001" style="flex:1;" />
@@ -589,7 +632,8 @@
     <div id="draw-banner">
       <span id="draw-banner-text">Click to add points.</span>
       <span id="draw-point-count">0 pts</span>
-      <button class="finish" onclick="finishDraw()">✓ Finish Polygon</button>
+      <button class="undo-draw" onclick="undoLastPoint()" id="draw-undo-btn" style="display:none;">↩ Undo</button>
+      <button class="finish" onclick="finishDraw()">✓ Finish</button>
       <button class="cancel-draw" onclick="cancelDraw()">✕ Cancel</button>
     </div>
 
@@ -668,11 +712,11 @@
         <div class="layer-active-dot"></div>
       </label>
 
-      <label class="layer-row" id="lr-contours">
-        <input type="checkbox" value="contours" onchange="toggleOverlay('contours', this.checked)" />
+      <label class="layer-row" id="lr-gebco">
+        <input type="checkbox" value="gebco" onchange="toggleOverlay('gebco', this.checked)" />
         <div class="layer-row-info">
-          <div class="layer-row-name">📐 Contour Lines</div>
-          <div class="layer-row-desc">Elevation contours via OpenTopoMap overlay</div>
+          <div class="layer-row-name">🏞 GEBCO Bathymetry</div>
+          <div class="layer-row-desc">Global freshwater & ocean depth shading</div>
         </div>
         <div class="layer-active-dot"></div>
       </label>
@@ -686,11 +730,22 @@
         <div class="layer-active-dot"></div>
       </label>
 
-      <label class="layer-row" id="lr-stamen-water">
-        <input type="checkbox" value="stamen-water" onchange="toggleOverlay('stamen-water', this.checked)" />
+      <div class="layers-section-label">Data Layers</div>
+
+      <label class="layer-row" id="lr-catches-toggle">
+        <input type="checkbox" value="catches-layer" checked onchange="toggleCatchesLayer(this.checked)" />
         <div class="layer-row-info">
-          <div class="layer-row-name">🏞 Watercolor (Stamen)</div>
-          <div class="layer-row-desc">Artistic watercolor overlay — highlights water bodies</div>
+          <div class="layer-row-name">🎣 Catch Pins</div>
+          <div class="layer-row-desc">Show/hide all logged catch markers</div>
+        </div>
+        <div class="layer-active-dot"></div>
+      </label>
+
+      <label class="layer-row" id="lr-wb-toggle">
+        <input type="checkbox" value="wb-layer" checked onchange="toggleWaterBodiesLayer(this.checked)" />
+        <div class="layer-row-info">
+          <div class="layer-row-name">💧 Water Body Pins & Shapes</div>
+          <div class="layer-row-desc">Show/hide water body markers and polygons</div>
         </div>
         <div class="layer-active-dot"></div>
       </label>
@@ -953,20 +1008,89 @@ let clickedLatLng = null;
 let listOpen = false;
 let wbOpen = false;
 
+// Layer visibility state (persisted in localStorage)
+let catchesLayerVisible = true;
+let wbLayerVisible = true;
+
 // Water body state
 let allWaterBodies = [];
 let wbMarkers = {};
 let wbShapes = {};
+let wbCentroidMarkers = {}; // non-interactive centroid pins
 let editingWbId = null;
 let wfSpecies = [];
 let pickingWbLocation = false;
 let tempWbMarker = null;
 
-// Draw state — polygons only
+// Inline-form draw state
+let inlineDrawing = false;        // drawing from within the form
+let inlineDrawPoints = [];        // latlng array for inline draw
+let inlineDrawVertexMarkers = []; // visual vertex circles
+let inlineDrawPreviewLayer = null;
+let inlineDrawPendingGeojson = null; // finalized geojson before save
+
+// Legacy standalone draw state (kept for "Redraw" from list)
 let drawingMode = false;
 let drawPoints = [];
 let drawPreviewLayer = null;
+let drawVertexMarkers = [];
 let drawTargetWbId = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER PERSISTENCE
+// ─────────────────────────────────────────────────────────────────────────────
+function loadLayerPrefs() {
+  const saved = JSON.parse(localStorage.getItem("layerPrefs") || "{}");
+  catchesLayerVisible = saved.catches !== false;
+  wbLayerVisible = saved.wb !== false;
+
+  // Sync checkboxes
+  const catchCb = document.querySelector('#lr-catches-toggle input');
+  const wbCb = document.querySelector('#lr-wb-toggle input');
+  if (catchCb) catchCb.checked = catchesLayerVisible;
+  if (wbCb) wbCb.checked = wbLayerVisible;
+
+  // Update active dots
+  document.getElementById('lr-catches-toggle').classList.toggle('is-active', catchesLayerVisible);
+  document.getElementById('lr-wb-toggle').classList.toggle('is-active', wbLayerVisible);
+}
+
+function saveLayerPrefs() {
+  localStorage.setItem("layerPrefs", JSON.stringify({ catches: catchesLayerVisible, wb: wbLayerVisible }));
+}
+
+function toggleCatchesLayer(on) {
+  catchesLayerVisible = on;
+  saveLayerPrefs();
+  document.getElementById('lr-catches-toggle').classList.toggle('is-active', on);
+  Object.values(markers).forEach(m => {
+    if (on) { if (!map.hasLayer(m)) map.addLayer(m); }
+    else { if (map.hasLayer(m)) map.removeLayer(m); }
+  });
+  updateLayersBtnState();
+}
+
+function toggleWaterBodiesLayer(on) {
+  wbLayerVisible = on;
+  saveLayerPrefs();
+  document.getElementById('lr-wb-toggle').classList.toggle('is-active', on);
+  // Toggle pin markers (but NOT centroid markers — those are joined to polygons)
+  Object.values(wbMarkers).forEach(m => {
+    if (on) { if (!map.hasLayer(m)) map.addLayer(m); }
+    else { if (map.hasLayer(m)) map.removeLayer(m); }
+  });
+  // Toggle shapes
+  Object.values(wbShapes).forEach(s => {
+    if (on) { if (!map.hasLayer(s)) map.addLayer(s); }
+    else { if (map.hasLayer(s)) map.removeLayer(s); }
+  });
+  // Toggle centroid markers
+  Object.values(wbCentroidMarkers).forEach(m => {
+    if (on) { if (!map.hasLayer(m)) map.addLayer(m); }
+    else { if (map.hasLayer(m)) map.removeLayer(m); }
+  });
+  updateLayersBtnState();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SPECIES
@@ -1089,17 +1213,15 @@ const OVERLAY_LAYERS = {
     attribution: "&copy; <a href='https://www.openseamap.org'>OpenSeaMap</a>",
     opacity: 0.85, zIndex: 5
   }),
-  contours: L.tileLayer("https://tile.waymarkedtrails.org/slopes/{z}/{x}/{y}.png", {
-    attribution: "&copy; Waymarked Trails",
-    opacity: 0.6, zIndex: 5
+  // GEBCO global bathymetric shading — works on freshwater bodies globally
+  gebco: L.tileLayer("https://tiles.arcgis.com/tiles/C8EMgrsFcRFL6LrL/arcgis/rest/services/GEBCO_2023_BasemapNoLabels/MapServer/tile/{z}/{y}/{x}", {
+    attribution: "&copy; <a href='https://www.gebco.net'>GEBCO</a> Bathymetric Chart",
+    opacity: 0.55, zIndex: 4,
+    maxZoom: 14
   }),
   "usgs-water": L.tileLayer("https://basemap.nationalmap.gov/arcgis/rest/services/USGSHydroCached/MapServer/tile/{z}/{y}/{x}", {
     attribution: "USGS Hydrology",
     opacity: 0.65, zIndex: 5
-  }),
-  "stamen-water": L.tileLayer("https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg", {
-    attribution: "&copy; Stadia Maps, &copy; Stamen Design, &copy; OpenStreetMap contributors",
-    opacity: 0.35, zIndex: 4
   })
 };
 
@@ -1109,28 +1231,26 @@ BASE_LAYERS.osm.addTo(map);
 // ── Layer switcher logic ──────────────────────────────────────────────────────
 function switchBaseLayer(key) {
   if (key === currentBaseKey) return;
-
-  // Remove old base
   const old = BASE_LAYERS[currentBaseKey];
   if (old) {
     if (old instanceof L.LayerGroup) old.eachLayer(l => map.removeLayer(l));
     else map.removeLayer(old);
   }
-
-  // Add new base
   const next = BASE_LAYERS[key];
   if (next) {
     if (next instanceof L.LayerGroup) next.eachLayer(l => l.addTo(map));
     else next.addTo(map);
   }
-
   currentBaseKey = key;
-
-  // Update active dot styling
   document.querySelectorAll(".layer-row").forEach(row => {
     const radio = row.querySelector("input[type='radio']");
     if (radio) row.classList.toggle("is-active", radio.value === key);
   });
+  // Persist
+  const prefs = JSON.parse(localStorage.getItem("layerPrefs") || "{}");
+  prefs.base = key;
+  localStorage.setItem("layerPrefs", JSON.stringify(prefs));
+  updateLayersBtnState();
 }
 
 const activeOverlays = new Set();
@@ -1141,11 +1261,16 @@ function toggleOverlay(key, on) {
   if (on) { layer.addTo(map); activeOverlays.add(key); }
   else { map.removeLayer(layer); activeOverlays.delete(key); }
 
-  // Update active dot for overlay row
-  const row = document.getElementById("lr-" + key.replace("-", "-"));
+  const rowId = "lr-" + key;
+  const row = document.getElementById(rowId);
   if (row) row.classList.toggle("is-active", on);
 
-  // Update button badge
+  // Persist overlay state
+  const prefs = JSON.parse(localStorage.getItem("layerPrefs") || "{}");
+  if (!prefs.overlays) prefs.overlays = {};
+  prefs.overlays[key] = on;
+  localStorage.setItem("layerPrefs", JSON.stringify(prefs));
+
   updateLayersBtnState();
 }
 
@@ -1168,13 +1293,37 @@ function toggleLayersPanel() {
   document.getElementById("layers-toggle-btn").classList.toggle("layers-active", layersPanelOpen || activeOverlays.size > 0 || currentBaseKey !== "osm");
 }
 
+// Restore saved layer preferences
+function restoreLayerPrefs() {
+  const saved = JSON.parse(localStorage.getItem("layerPrefs") || "{}");
+  if (saved.base && saved.base !== "osm") {
+    const radio = document.querySelector(`input[name="base-layer"][value="${saved.base}"]`);
+    if (radio) { radio.checked = true; switchBaseLayer(saved.base); }
+  }
+  if (saved.overlays) {
+    Object.entries(saved.overlays).forEach(([key, on]) => {
+      if (on) {
+        const cb = document.querySelector(`input[value="${key}"]`);
+        if (cb) { cb.checked = true; toggleOverlay(key, true); }
+      }
+    });
+  }
+}
+
 // ── Map click handler ─────────────────────────────────────────────────────────
 map.on("click", function (e) {
-  // Drawing mode: add a point to the polygon
+  // Inline drawing from form
+  if (inlineDrawing) {
+    addInlineDrawPoint(e.latlng);
+    return;
+  }
+
+  // Legacy standalone draw mode
   if (drawingMode) {
     drawPoints.push(e.latlng);
+    addDrawVertex(e.latlng, drawPoints.length - 1, false);
     updateDrawPreview();
-    document.getElementById("draw-point-count").textContent = drawPoints.length + " pt" + (drawPoints.length !== 1 ? "s" : "");
+    updateDrawBannerCount();
     return;
   }
 
@@ -1183,7 +1332,7 @@ map.on("click", function (e) {
     document.getElementById("wf-lat").value = e.latlng.lat.toFixed(6);
     document.getElementById("wf-lng").value = e.latlng.lng.toFixed(6);
     if (tempWbMarker) map.removeLayer(tempWbMarker);
-    tempWbMarker = L.marker(e.latlng, { icon: wbIcon("River") }).addTo(map);
+    tempWbMarker = L.marker(e.latlng, { icon: wbEmoji() }).addTo(map);
     stopWbPick();
     openWbFormModal();
     return;
@@ -1213,8 +1362,12 @@ map.on("click", function (e) {
   autoFillConditions(e.latlng.lat, e.latlng.lng);
 });
 
-// Double-click finishes polygon drawing
 map.on("dblclick", function(e) {
+  if (inlineDrawing) {
+    e.originalEvent.preventDefault();
+    finishInlineDraw();
+    return;
+  }
   if (drawingMode) {
     e.originalEvent.preventDefault();
     finishDraw();
@@ -1313,6 +1466,8 @@ async function saveCatch() {
       if (tempMarker) { map.removeLayer(tempMarker); tempMarker = null; }
       const m = L.marker([saved.lat, saved.lng]).addTo(map).bindPopup(buildPopup(saved));
       markers[saved.id] = m;
+      // Respect visibility toggle
+      if (!catchesLayerVisible) map.removeLayer(m);
       statusEl.className = "success"; statusEl.textContent = "✅ Saved!";
     }
     applyFilters();
@@ -1603,10 +1758,15 @@ function applyFilters() {
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
-    if (!map.hasLayer(marker)) map.addLayer(marker);
+    // Only show if both visible and passing filter
+    const shouldShow = filteredIds.has(c.id) && catchesLayerVisible;
+    if (shouldShow) { if (!map.hasLayer(marker)) map.addLayer(marker); }
+    else { if (map.hasLayer(marker)) map.removeLayer(marker); }
     const el = marker.getElement();
-    if (filteredIds.has(c.id)) { if (el) { el.style.filter = ""; el.style.opacity = ""; } }
-    else { if (el) { el.style.filter = "grayscale(100%)"; el.style.opacity = "0.35"; } }
+    if (el) {
+      if (filteredIds.has(c.id)) { el.style.filter = ""; el.style.opacity = ""; }
+      else { el.style.filter = "grayscale(100%)"; el.style.opacity = "0.35"; }
+    }
   });
   const activeCount = countActiveFilters(fs);
   const badge = document.getElementById("filter-badge");
@@ -1625,7 +1785,7 @@ function clearFilters() {
   allCatches.forEach(c => {
     const marker = markers[c.id];
     if (!marker) return;
-    if (!map.hasLayer(marker)) map.addLayer(marker);
+    if (catchesLayerVisible) { if (!map.hasLayer(marker)) map.addLayer(marker); }
     const el = marker.getElement();
     if (el) { el.style.filter = ""; el.style.opacity = ""; }
   });
@@ -1645,6 +1805,7 @@ async function loadCatches() {
     allCatches.forEach(c => {
       const m = L.marker([c.lat, c.lng]).addTo(map).bindPopup(buildPopup(c));
       markers[c.id] = m;
+      if (!catchesLayerVisible) map.removeLayer(m);
     });
   } catch (err) { console.error("Failed to load catches:", err); }
 }
@@ -1659,32 +1820,54 @@ function typeBadge(type) {
   return `<span class="wb-type-badge ${cls}">${type}</span>`;
 }
 
-function wbIcon(type) {
-  const emoji = { River: "🏞", Lake: "🏔", Reservoir: "💧", Stream: "〰", Bay: "⚓", Other: "📍" };
-  const e = emoji[type] || "💧";
-  const bg = { River: "#1a6688", Lake: "#2d6a35", Reservoir: "#5b2d8a", Stream: "#1a5c27", Bay: "#7a3d00", Other: "#5a3e1b" };
-  const color = bg[type] || "#2d6a35";
+// Water emoji icon — unified for all water body types
+function wbEmoji() {
   return L.divIcon({
     className: "",
     html: `<div style="
-      width:28px;height:28px;
-      background:${color};border:2px solid rgba(0,0,0,0.35);
-      border-radius:50% 50% 50% 0;transform:rotate(-45deg);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-      <span style="transform:rotate(45deg);font-size:13px;line-height:1;">${e}</span>
-    </div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 28],
-    popupAnchor: [0, -30]
+      font-size:22px;line-height:1;
+      filter:drop-shadow(0 2px 3px rgba(0,0,0,0.35));
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;">💧</div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 26],
+    popupAnchor: [0, -28]
   });
 }
 
-function shapeStyle(type) {
-  const colors = { River: "#1a6688", Lake: "#2d6a35", Reservoir: "#5b2d8a", Stream: "#1a5c27", Bay: "#7a3d00", Other: "#5a3e1b" };
-  const color = colors[type] || "#2d6a35";
-  // All shapes are polygons now — no dashed lines
-  return { color, weight: 3, opacity: 0.8, fillColor: color, fillOpacity: 0.15 };
+// Non-interactive centroid marker (joined to polygon, not a separate selectable pin)
+function wbCentroidIcon() {
+  return L.divIcon({
+    className: "",
+    html: `<div style="
+      font-size:20px;line-height:1;
+      filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-select:none;">💧</div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],   // centered, not teardrop — sits inside polygon
+    popupAnchor: [0, -14]
+  });
+}
+
+function shapeStyle() {
+  // Blue outline for all water body polygon shapes
+  return {
+    color: "#1a5fa8",
+    weight: 2.5,
+    opacity: 0.85,
+    fillColor: "#2a7fd4",
+    fillOpacity: 0.12,
+    dashArray: null
+  };
+}
+
+function computeCentroid(latlngs) {
+  let latSum = 0, lngSum = 0;
+  latlngs.forEach(ll => { latSum += ll[1]; lngSum += ll[0]; });
+  return [latSum / latlngs.length, lngSum / latlngs.length];
 }
 
 function toggleWbPane() {
@@ -1708,6 +1891,7 @@ function toggleWbPane() {
 function openWbForm(wbId) {
   editingWbId = wbId || null;
   wfSpecies = [];
+  inlineDrawPendingGeojson = null;
 
   ["wf-name","wf-lat","wf-lng","wf-depth-min","wf-depth-max","wf-info-url","wf-parent"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
@@ -1718,6 +1902,9 @@ function openWbForm(wbId) {
   document.getElementById("wf-species-tags").innerHTML = "";
   const statusEl = document.getElementById("wf-status");
   statusEl.style.display = "none";
+
+  // Reset boundary UI
+  updateInlineBoundaryStatus();
 
   if (wbId) {
     const wb = allWaterBodies.find(w => w.id === wbId);
@@ -1735,6 +1922,11 @@ function openWbForm(wbId) {
       if (wb.depth_max != null) document.getElementById("wf-depth-max").value = wb.depth_max;
       wfSpecies = wb.species_list ? [...wb.species_list] : [];
       renderWfTags();
+      // Pre-load existing shape
+      if (wb.shape_geojson) {
+        inlineDrawPendingGeojson = typeof wb.shape_geojson === "string" ? JSON.parse(wb.shape_geojson) : wb.shape_geojson;
+        updateInlineBoundaryStatus();
+      }
     }
   } else {
     document.getElementById("wf-title").textContent = "💧 Add Body of Water";
@@ -1751,9 +1943,13 @@ function openWbFormModal() {
 }
 
 function closeWbForm() {
+  // If we were mid inline-draw, cancel it
+  if (inlineDrawing) cancelInlineDraw(true);
+
   document.getElementById("wb-form-modal").style.display = "none";
   document.getElementById("wb-overlay").style.display = "none";
   editingWbId = null;
+  inlineDrawPendingGeojson = null;
   stopWbPick();
   if (tempWbMarker) { map.removeLayer(tempWbMarker); tempWbMarker = null; }
 }
@@ -1833,13 +2029,191 @@ document.getElementById("waterBody").addEventListener("change", function() {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// INLINE DRAW (from within the Add Water Body form)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateInlineBoundaryStatus() {
+  const statusEl = document.getElementById("wf-boundary-status");
+  const clearBtn = document.getElementById("wf-clear-draw-btn");
+  const drawBtn = document.getElementById("wf-draw-btn");
+
+  if (inlineDrawPendingGeojson) {
+    const coords = inlineDrawPendingGeojson?.geometry?.coordinates?.[0] || [];
+    const ptCount = Math.max(0, coords.length - 1); // last coord closes ring
+    statusEl.textContent = `✅ Polygon drawn — ${ptCount} points`;
+    statusEl.style.color = "#1a5c27";
+    clearBtn.style.display = "inline-block";
+    drawBtn.textContent = "✏️ Redraw";
+  } else {
+    statusEl.textContent = "No boundary drawn yet.";
+    statusEl.style.color = "#1a56c4";
+    clearBtn.style.display = "none";
+    drawBtn.textContent = "🖊 Draw on Map";
+  }
+}
+
+function clearInlineDraw() {
+  inlineDrawPendingGeojson = null;
+  updateInlineBoundaryStatus();
+}
+
+function startInlineDrawFromForm() {
+  // Hide form modal so map is accessible
+  document.getElementById("wb-form-modal").style.display = "none";
+  document.getElementById("wb-overlay").style.display = "none";
+
+  // Clear previous inline draw
+  clearAllInlineDrawVisuals();
+  inlineDrawPoints = [];
+  inlineDrawPendingGeojson = null;
+  inlineDrawing = true;
+
+  map.getContainer().style.cursor = "crosshair";
+  map.doubleClickZoom.disable();
+
+  document.getElementById("draw-banner-text").textContent = "Draw water body boundary — click to add points";
+  document.getElementById("draw-point-count").textContent = "0 pts";
+  document.getElementById("draw-undo-btn").style.display = "none";
+  document.getElementById("draw-banner").classList.add("active");
+}
+
+function addInlineDrawPoint(latlng) {
+  inlineDrawPoints.push(latlng);
+
+  // Add draggable vertex marker
+  const idx = inlineDrawPoints.length - 1;
+  const vm = L.marker(latlng, {
+    icon: L.divIcon({
+      className: "draw-vertex-icon",
+      iconSize: [10, 10],
+      iconAnchor: [5, 5]
+    }),
+    draggable: true,
+    zIndexOffset: 1000
+  }).addTo(map);
+
+  vm.on("drag", function(e) {
+    inlineDrawPoints[idx] = e.target.getLatLng();
+    updateInlineDrawPreview();
+  });
+  vm.on("dragstart", function() { map.getContainer().style.cursor = "grabbing"; });
+  vm.on("dragend", function() { map.getContainer().style.cursor = "crosshair"; });
+
+  inlineDrawVertexMarkers.push(vm);
+  updateInlineDrawPreview();
+
+  const ptCount = inlineDrawPoints.length;
+  document.getElementById("draw-point-count").textContent = ptCount + " pt" + (ptCount !== 1 ? "s" : "");
+  document.getElementById("draw-undo-btn").style.display = ptCount > 0 ? "inline-block" : "none";
+}
+
+function updateInlineDrawPreview() {
+  if (inlineDrawPreviewLayer) { map.removeLayer(inlineDrawPreviewLayer); inlineDrawPreviewLayer = null; }
+  if (inlineDrawPoints.length < 1) return;
+
+  const style = {
+    color: "#1a56c4", weight: 2, opacity: 0.8,
+    fillColor: "#1a56c4", fillOpacity: 0.1, dashArray: "5 4"
+  };
+
+  if (inlineDrawPoints.length >= 3) {
+    inlineDrawPreviewLayer = L.polygon(inlineDrawPoints, style).addTo(map);
+  } else {
+    inlineDrawPreviewLayer = L.polyline(inlineDrawPoints, style).addTo(map);
+  }
+}
+
+function undoLastInlinePoint() {
+  if (inlineDrawPoints.length === 0) return;
+  inlineDrawPoints.pop();
+  const vm = inlineDrawVertexMarkers.pop();
+  if (vm) map.removeLayer(vm);
+  updateInlineDrawPreview();
+  const ptCount = inlineDrawPoints.length;
+  document.getElementById("draw-point-count").textContent = ptCount + " pt" + (ptCount !== 1 ? "s" : "");
+  document.getElementById("draw-undo-btn").style.display = ptCount > 0 ? "inline-block" : "none";
+}
+
+function finishInlineDraw() {
+  if (inlineDrawPoints.length < 3) {
+    alert("Add at least 3 points to close the polygon.");
+    return;
+  }
+
+  // Build GeoJSON
+  const coords = inlineDrawPoints.map(p => [p.lng, p.lat]);
+  coords.push(coords[0]); // close ring
+  inlineDrawPendingGeojson = {
+    type: "Feature",
+    geometry: { type: "Polygon", coordinates: [coords] },
+    properties: {}
+  };
+
+  // Compute centroid and fill lat/lng fields
+  const [centLat, centLng] = computeCentroid(coords.slice(0, -1));
+  document.getElementById("wf-lat").value = centLat.toFixed(6);
+  document.getElementById("wf-lng").value = centLng.toFixed(6);
+
+  clearAllInlineDrawVisuals();
+  inlineDrawing = false;
+  map.getContainer().style.cursor = "";
+  map.doubleClickZoom.enable();
+  document.getElementById("draw-banner").classList.remove("active");
+
+  // Reopen form
+  document.getElementById("wb-form-modal").style.display = "block";
+  document.getElementById("wb-overlay").style.display = "block";
+  updateInlineBoundaryStatus();
+}
+
+function cancelInlineDraw(silent) {
+  clearAllInlineDrawVisuals();
+  inlineDrawing = false;
+  inlineDrawPoints = [];
+  inlineDrawPendingGeojson = null;
+  map.getContainer().style.cursor = "";
+  map.doubleClickZoom.enable();
+  document.getElementById("draw-banner").classList.remove("active");
+  if (!silent) {
+    document.getElementById("wb-form-modal").style.display = "block";
+    document.getElementById("wb-overlay").style.display = "block";
+    updateInlineBoundaryStatus();
+  }
+}
+
+function clearAllInlineDrawVisuals() {
+  if (inlineDrawPreviewLayer) { map.removeLayer(inlineDrawPreviewLayer); inlineDrawPreviewLayer = null; }
+  inlineDrawVertexMarkers.forEach(vm => map.removeLayer(vm));
+  inlineDrawVertexMarkers = [];
+}
+
+// Draw banner undo button routes to correct mode
+function undoLastPoint() {
+  if (inlineDrawing) { undoLastInlinePoint(); return; }
+  if (drawingMode) { undoLastStandalonePoint(); return; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE WATER BODY
+// ─────────────────────────────────────────────────────────────────────────────
 async function saveWaterBody() {
   const name = document.getElementById("wf-name").value.trim();
   if (!name) { alert("Name is required."); return; }
 
-  const lat = parseFloat(document.getElementById("wf-lat").value) || null;
-  const lng = parseFloat(document.getElementById("wf-lng").value) || null;
+  let lat = parseFloat(document.getElementById("wf-lat").value) || null;
+  let lng = parseFloat(document.getElementById("wf-lng").value) || null;
   const parentName = document.getElementById("wf-parent").value.trim() || null;
+
+  // If a polygon was drawn and no lat/lng overridden, ensure centroid was set
+  // (already filled during finishInlineDraw, but double-check)
+  if (inlineDrawPendingGeojson && (lat == null || lng == null)) {
+    const coords = inlineDrawPendingGeojson.geometry.coordinates[0];
+    const [cLat, cLng] = computeCentroid(coords.slice(0,-1));
+    lat = cLat; lng = cLng;
+  }
+
+  const shapeJson = inlineDrawPendingGeojson ? JSON.stringify(inlineDrawPendingGeojson) : null;
 
   const data = {
     name,
@@ -1851,7 +2225,8 @@ async function saveWaterBody() {
     info_url: document.getElementById("wf-info-url").value.trim() || null,
     depth_min: parseFloat(document.getElementById("wf-depth-min").value) || null,
     depth_max: parseFloat(document.getElementById("wf-depth-max").value) || null,
-    species_list: wfSpecies.length > 0 ? wfSpecies : null
+    species_list: wfSpecies.length > 0 ? wfSpecies : null,
+    shape_geojson: shapeJson
   };
 
   const saveBtn = document.getElementById("wf-save-btn");
@@ -1894,6 +2269,7 @@ async function deleteWaterBody(id) {
     await dbFetch("lakes?id=eq." + id, "DELETE");
     if (wbMarkers[id]) { map.removeLayer(wbMarkers[id]); delete wbMarkers[id]; }
     if (wbShapes[id]) { map.removeLayer(wbShapes[id]); delete wbShapes[id]; }
+    if (wbCentroidMarkers[id]) { map.removeLayer(wbCentroidMarkers[id]); delete wbCentroidMarkers[id]; }
     allWaterBodies = allWaterBodies.filter(w => w.id !== id);
     updateWbDatalist();
     if (wbOpen) renderWbList();
@@ -1905,25 +2281,59 @@ async function deleteWbShape(id) {
   try {
     await dbFetch("lakes?id=eq." + id, "PATCH", { shape_geojson: null });
     if (wbShapes[id]) { map.removeLayer(wbShapes[id]); delete wbShapes[id]; }
+    if (wbCentroidMarkers[id]) { map.removeLayer(wbCentroidMarkers[id]); delete wbCentroidMarkers[id]; }
     const wb = allWaterBodies.find(w => w.id === id);
     if (wb) wb.shape_geojson = null;
+    // Restore standalone pin marker
+    addWbMapLayer(wb);
     if (wbOpen) renderWbList();
   } catch (err) { console.error("Shape delete failed:", err); }
 }
 
 function addWbMapLayer(wb) {
-  if (wb.lat != null && wb.lng != null) {
-    const m = L.marker([wb.lat, wb.lng], { icon: wbIcon(wb.type), zIndexOffset: -50 })
+  if (wb.shape_geojson) {
+    // Has polygon: add shape + non-interactive centroid marker, NO separate pin
+    addWbShape(wb);
+    addWbCentroidMarker(wb);
+  } else if (wb.lat != null && wb.lng != null) {
+    // No polygon: regular interactive pin
+    const m = L.marker([wb.lat, wb.lng], { icon: wbEmoji(), zIndexOffset: -50 })
       .addTo(map)
       .bindPopup(buildWbPopup(wb));
     wbMarkers[wb.id] = m;
+    if (!wbLayerVisible) map.removeLayer(m);
   }
-  if (wb.shape_geojson) addWbShape(wb);
+}
+
+function addWbCentroidMarker(wb) {
+  // Compute centroid from shape
+  let centLat = wb.lat, centLng = wb.lng;
+  try {
+    const geojson = typeof wb.shape_geojson === "string" ? JSON.parse(wb.shape_geojson) : wb.shape_geojson;
+    const coords = geojson?.geometry?.coordinates?.[0];
+    if (coords && coords.length > 1) {
+      const [cLat, cLng] = computeCentroid(coords.slice(0, -1));
+      centLat = cLat; centLng = cLng;
+    }
+  } catch(e) {}
+
+  if (centLat == null) return;
+
+  // Non-interactive marker (pointer-events:none on the icon HTML)
+  const cm = L.marker([centLat, centLng], {
+    icon: wbCentroidIcon(),
+    zIndexOffset: -40,
+    interactive: true  // allow popup on click but it's visually non-draggable
+  }).addTo(map).bindPopup(buildWbPopup(wb));
+
+  wbCentroidMarkers[wb.id] = cm;
+  if (!wbLayerVisible) map.removeLayer(cm);
 }
 
 function updateWbMapLayer(wb) {
   if (wbMarkers[wb.id]) { map.removeLayer(wbMarkers[wb.id]); delete wbMarkers[wb.id]; }
   if (wbShapes[wb.id]) { map.removeLayer(wbShapes[wb.id]); delete wbShapes[wb.id]; }
+  if (wbCentroidMarkers[wb.id]) { map.removeLayer(wbCentroidMarkers[wb.id]); delete wbCentroidMarkers[wb.id]; }
   addWbMapLayer(wb);
 }
 
@@ -1931,11 +2341,12 @@ function addWbShape(wb) {
   try {
     const geojson = typeof wb.shape_geojson === "string" ? JSON.parse(wb.shape_geojson) : wb.shape_geojson;
     const layer = L.geoJSON(geojson, {
-      style: shapeStyle(wb.type),
+      style: shapeStyle(),
       className: "wb-shape",
       onEachFeature: (feature, layer) => { layer.bindPopup(buildWbPopup(wb)); }
     }).addTo(map);
     wbShapes[wb.id] = layer;
+    if (!wbLayerVisible) map.removeLayer(layer);
   } catch(e) { console.warn("Could not render shape for", wb.name, e); }
 }
 
@@ -2030,9 +2441,6 @@ function renderWbList() {
         <div class="wb-card-actions">
           ${wb.lat != null ? `<button class="btn-wb-fly" onclick="event.stopPropagation();flyToWb('${wb.id}')">🗺 Fly To</button>` : ""}
           <button class="btn-wb-edit" onclick="event.stopPropagation();openWbForm('${wb.id}')">✏️ Edit</button>
-          <button class="btn-wb-draw" onclick="event.stopPropagation();startDrawForWb('${wb.id}', '${wb.name.replace(/'/g,"\\'")}')">
-            ${hasShape ? "✏️ Redraw" : "🖊 Draw Boundary"}
-          </button>
           ${hasShape ? `<button class="btn-wb-shape-del" onclick="event.stopPropagation();deleteWbShape('${wb.id}')">Remove Boundary</button>` : ""}
           <button class="btn-wb-del" onclick="event.stopPropagation();deleteWaterBody('${wb.id}')">Delete</button>
         </div>
@@ -2072,17 +2480,47 @@ function flyToWb(id) {
   }
   if (wb.lat != null) {
     map.flyTo([wb.lat, wb.lng], 13, { duration: 1.2 });
-    setTimeout(() => { if (wbMarkers[id]) wbMarkers[id].openPopup(); }, 1400);
+    setTimeout(() => {
+      if (wbCentroidMarkers[id]) wbCentroidMarkers[id].openPopup();
+      else if (wbMarkers[id]) wbMarkers[id].openPopup();
+    }, 1400);
   }
 }
 
 // =============================================================================
-// DRAW POLYGON BOUNDARY ON MAP
-// All water body types use polygon mode.
+// STANDALONE DRAW (Redraw from list — kept as fallback but now mainly inline)
 // =============================================================================
 
+function addDrawVertex(latlng, idx, isStandalone) {
+  const vm = L.marker(latlng, {
+    icon: L.divIcon({
+      className: "draw-vertex-icon",
+      iconSize: [10, 10],
+      iconAnchor: [5, 5]
+    }),
+    draggable: true,
+    zIndexOffset: 1000
+  }).addTo(map);
+
+  vm.on("drag", function(e) {
+    if (isStandalone) {
+      drawPoints[idx] = e.target.getLatLng();
+      updateDrawPreview();
+    }
+  });
+  vm.on("dragstart", function() { map.getContainer().style.cursor = "grabbing"; });
+  vm.on("dragend", function() { map.getContainer().style.cursor = "crosshair"; });
+
+  drawVertexMarkers.push(vm);
+}
+
+function updateDrawBannerCount() {
+  const ptCount = drawPoints.length;
+  document.getElementById("draw-point-count").textContent = ptCount + " pt" + (ptCount !== 1 ? "s" : "");
+  document.getElementById("draw-undo-btn").style.display = ptCount > 0 ? "inline-block" : "none";
+}
+
 function startDrawForWb(wbId, name) {
-  // Close side pane on mobile so user can see the map
   if (window.innerWidth <= 700) {
     document.getElementById("wb-pane").classList.remove("mobile-open");
     document.getElementById("map-pane").classList.remove("mobile-hidden");
@@ -2094,17 +2532,18 @@ function startDrawForWb(wbId, name) {
   drawTargetWbId = wbId;
   drawingMode = true;
   drawPoints = [];
+  drawVertexMarkers = [];
 
-  // Remove stale preview
   if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
-  // Hide the old shape while redrawing so the user sees a clean slate
   if (wbShapes[wbId]) { map.removeLayer(wbShapes[wbId]); delete wbShapes[wbId]; }
+  if (wbCentroidMarkers[wbId]) { map.removeLayer(wbCentroidMarkers[wbId]); delete wbCentroidMarkers[wbId]; }
 
   map.getContainer().style.cursor = "crosshair";
   map.doubleClickZoom.disable();
 
-  document.getElementById("draw-banner-text").textContent = `Drawing boundary for: ${name} — click to place points`;
+  document.getElementById("draw-banner-text").textContent = `Drawing boundary for: ${name}`;
   document.getElementById("draw-point-count").textContent = "0 pts";
+  document.getElementById("draw-undo-btn").style.display = "none";
   document.getElementById("draw-banner").classList.add("active");
 }
 
@@ -2112,18 +2551,31 @@ function updateDrawPreview() {
   if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
   if (drawPoints.length < 1) return;
 
-  const previewStyle = { color: "#1a56c4", weight: 2, opacity: 0.8, fillColor: "#1a56c4", fillOpacity: 0.1, dashArray: "5 4" };
+  const style = {
+    color: "#1a56c4", weight: 2, opacity: 0.8,
+    fillColor: "#1a56c4", fillOpacity: 0.1, dashArray: "5 4"
+  };
 
   if (drawPoints.length >= 3) {
-    // Show closing polygon preview
-    drawPreviewLayer = L.polygon(drawPoints, previewStyle).addTo(map);
+    drawPreviewLayer = L.polygon(drawPoints, style).addTo(map);
   } else {
-    // Not enough points for polygon yet — show a line
-    drawPreviewLayer = L.polyline(drawPoints, previewStyle).addTo(map);
+    drawPreviewLayer = L.polyline(drawPoints, style).addTo(map);
   }
 }
 
+function undoLastStandalonePoint() {
+  if (drawPoints.length === 0) return;
+  drawPoints.pop();
+  const vm = drawVertexMarkers.pop();
+  if (vm) map.removeLayer(vm);
+  updateDrawPreview();
+  updateDrawBannerCount();
+}
+
 async function finishDraw() {
+  // Route to inline if that's active
+  if (inlineDrawing) { finishInlineDraw(); return; }
+
   if (drawPoints.length < 3) {
     alert("Add at least 3 points to close a polygon boundary.");
     return;
@@ -2133,28 +2585,39 @@ async function finishDraw() {
   const wb = allWaterBodies.find(w => w.id === wbId);
   if (!wb) { cancelDraw(); return; }
 
-  // Build GeoJSON Polygon
   const coords = drawPoints.map(p => [p.lng, p.lat]);
-  coords.push(coords[0]); // close ring
+  coords.push(coords[0]);
   const geojson = {
     type: "Feature",
     geometry: { type: "Polygon", coordinates: [coords] },
     properties: {}
   };
 
-  // Clean up draw state first
+  // Compute centroid
+  const [centLat, centLng] = computeCentroid(coords.slice(0, -1));
+
   if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  drawVertexMarkers.forEach(vm => map.removeLayer(vm));
+  drawVertexMarkers = [];
   map.getContainer().style.cursor = "";
   map.doubleClickZoom.enable();
   drawingMode = false;
   drawPoints = [];
   document.getElementById("draw-banner").classList.remove("active");
 
-  // Save to Supabase
   try {
-    await dbFetch("lakes?id=eq." + wbId, "PATCH", { shape_geojson: JSON.stringify(geojson) });
+    await dbFetch("lakes?id=eq." + wbId, "PATCH", {
+      shape_geojson: JSON.stringify(geojson),
+      lat: centLat,
+      lng: centLng
+    });
     wb.shape_geojson = geojson;
+    wb.lat = centLat;
+    wb.lng = centLng;
+    // Remove old standalone pin if it existed
+    if (wbMarkers[wbId]) { map.removeLayer(wbMarkers[wbId]); delete wbMarkers[wbId]; }
     addWbShape(wb);
+    addWbCentroidMarker(wb);
     if (wbOpen) renderWbList();
   } catch(err) {
     console.error("Boundary save failed:", err);
@@ -2163,12 +2626,18 @@ async function finishDraw() {
 }
 
 function cancelDraw() {
+  if (inlineDrawing) { cancelInlineDraw(false); return; }
+
   if (drawPreviewLayer) { map.removeLayer(drawPreviewLayer); drawPreviewLayer = null; }
+  drawVertexMarkers.forEach(vm => map.removeLayer(vm));
+  drawVertexMarkers = [];
   map.getContainer().style.cursor = "";
   map.doubleClickZoom.enable();
-  // Restore saved shape if it exists
   const wb = allWaterBodies.find(w => w.id === drawTargetWbId);
-  if (wb && wb.shape_geojson) addWbShape(wb);
+  if (wb && wb.shape_geojson) {
+    addWbShape(wb);
+    addWbCentroidMarker(wb);
+  }
   drawingMode = false;
   drawPoints = [];
   drawTargetWbId = null;
@@ -2193,6 +2662,8 @@ async function loadWaterBodies() {
 initFilters();
 loadSpecies();
 checkUsername();
+loadLayerPrefs();
+restoreLayerPrefs();
 loadCatches();
 loadWaterBodies();
 
